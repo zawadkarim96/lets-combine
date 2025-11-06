@@ -1139,11 +1139,11 @@ if utDashboardVisible
     string utVolBias = not na(utVolMa) ? (utVolNow > utVolMa ? '🟢 Above Avg' : utVolNow < utVolMa ? '🔴 Below Avg' : '— Avg') : '— Avg'
     float utVwapVal = ta.vwap(close)
     string utVwapPos = not na(utVwapVal) ? (close > utVwapVal ? '🟢 Price Above' : close < utVwapVal ? '🔴 Price Below' : '— Price @') : '— Price n/a'
-    float utMacdLine = na
-    float utMacdSignalLine = na
-    float _utMacdHist = na
-    [utMacdLine, utMacdSignalLine, _utMacdHist] := ta.macd(close, utMacdFastLengthInput, utMacdSlowLengthInput, utMacdSignalLengthInput)
-    string utMacdBias = not na(utMacdLine) and not na(utMacdSignalLine) ? (utMacdLine > utMacdSignalLine ? '🟢 Bullish' : utMacdLine < utMacdSignalLine ? '🔴 Bearish' : '— Neutral') : '— Neutral'
+    float utDashMacdLine = na
+    float utDashMacdSignal = na
+    float utDashMacdHist = na
+    [utDashMacdLine, utDashMacdSignal, utDashMacdHist] := ta.macd(close, utMacdFastLengthInput, utMacdSlowLengthInput, utMacdSignalLengthInput)
+    string utMacdBias = not na(utDashMacdLine) and not na(utDashMacdSignal) ? (utDashMacdLine > utDashMacdSignal ? '🟢 Bullish' : utDashMacdLine < utDashMacdSignal ? '🔴 Bearish' : '— Neutral') : '— Neutral'
     float utK = ta.sma(ta.stoch(close, high, low, utStochLengthInput), utStochKInput)
     float utD = ta.sma(utK, utStochDInput)
     string utStochPos = not na(utK) and not na(utD) ? (utK > utD ? '🟢 Up' : utK < utD ? '🔴 Down' : '— Flat') : '— Flat'
@@ -2877,7 +2877,22 @@ var line pdSrEquilibriumLine = na
 var line pdMacroEquilibriumLine = na
 var table pdMacroDeltaTable = na
 
-pdDeleteVisuals() =>
+pdClampPercent(float value) => math.max(-100.0, math.min(100.0, value))
+
+parsedOpen  = showTrendInput ? open : na
+candleColor = internalTrend.bias == BULLISH ? swingBullishColor : swingBearishColor
+plotcandle(parsedOpen,high,low,close,color = candleColor, wickcolor = candleColor, bordercolor = candleColor)
+
+if showHighLowSwingsInput or showPremiumDiscountZonesInput
+    updateTrailingExtremes()
+
+if showHighLowSwingsInput
+    drawHighLowSwings()
+
+bool srEnabled = showPremiumDiscountZonesInput
+bool macroEnabled = showPremiumDiscountMacroInput
+
+if not srEnabled and not macroEnabled
     if not na(pdSrUpperBox)
         box.delete(pdSrUpperBox)
         pdSrUpperBox := na
@@ -2902,19 +2917,7 @@ pdDeleteVisuals() =>
     if not na(pdMacroDeltaTable)
         table.clear(pdMacroDeltaTable, 0, 0, 0, 0)
         pdMacroDeltaTable := na
-
-pdClampPercent(float value) => math.max(-100.0, math.min(100.0, value))
-
-pdUpdatePremiumDiscount() =>
-    bool srEnabled = showPremiumDiscountZonesInput
-    bool macroEnabled = showPremiumDiscountMacroInput
-    if not srEnabled and not macroEnabled
-        pdDeleteVisuals()
-        return
-
-    if not barstate.islast
-        return
-
+else if barstate.islast
     float atrValue = ta.atr(200) * 0.8
     int srLookback = math.min(pdSrPeriodInput, bar_index + 1)
     int macroLookback = math.min(pdMacroPeriodInput, bar_index + 1)
@@ -3123,18 +3126,6 @@ pdUpdatePremiumDiscount() =>
         if not na(pdMacroDeltaTable)
             table.clear(pdMacroDeltaTable, 0, 0, 0, 0)
             pdMacroDeltaTable := na
-
-parsedOpen  = showTrendInput ? open : na
-candleColor = internalTrend.bias == BULLISH ? swingBullishColor : swingBearishColor
-plotcandle(parsedOpen,high,low,close,color = candleColor, wickcolor = candleColor, bordercolor = candleColor)
-
-if showHighLowSwingsInput or showPremiumDiscountZonesInput
-    updateTrailingExtremes()
-
-if showHighLowSwingsInput
-    drawHighLowSwings()
-
-pdUpdatePremiumDiscount()
 
 if showFairValueGapsInput
     deleteFairValueGaps()
