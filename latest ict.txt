@@ -189,11 +189,13 @@ renderUtLevels(utLevel[] levels, color zoneColor, utDrawing[] drawings) =>
             level = array.get(levels, i)
             int duration = bar_index - level.start
             int daysTot = int(duration * (timeframe.in_seconds(timeframe.period) / 86400))
-            string txt = daysTot >= 365
-              ? str.tostring(int(daysTot / 365)) + ' Y (' + str.tostring(duration) + ' bars)'
-              : daysTot >= 30
-                ? str.tostring(int(daysTot / 30)) + ' M (' + str.tostring(duration) + ' bars)'
-                : str.tostring(daysTot) + ' D (' + str.tostring(duration) + ' bars)'
+            string txt = ''
+            if daysTot >= 365
+                txt := str.tostring(int(daysTot / 365)) + ' Y (' + str.tostring(duration) + ' bars)'
+            else if daysTot >= 30
+                txt := str.tostring(int(daysTot / 30)) + ' M (' + str.tostring(duration) + ' bars)'
+            else
+                txt := str.tostring(daysTot) + ' D (' + str.tostring(duration) + ' bars)'
             int labelX = utLongevityLabelsAtRoot ? level.start : bar_index + utLongevityLabelOffsetInput
             float labelY = (level.top + level.bot) / 2
             line topLine = line.new(level.start, level.top, bar_index, level.top, color=zoneColor, width=8)
