@@ -1127,13 +1127,14 @@ utSrLineL10 := updateUtSrLine(utSrLineL10, utSrVisible and not utSrConflicts(utL
 var float utDashMacdLine = na
 var float utDashMacdSignal = na
 var float utDashMacdHist = na
-float macdLineValue = na
-float macdSignalValue = na
-float macdHistValue = na
-[macdLineValue, macdSignalValue, macdHistValue] = ta.macd(close, utMacdFastLengthInput, utMacdSlowLengthInput, utMacdSignalLengthInput)
-utDashMacdLine := macdLineValue
-utDashMacdSignal := macdSignalValue
-utDashMacdHist := macdHistValue
+[utMacdLineValue, utMacdSignalValue, utMacdHistValue] = ta.macd(close, utMacdFastLengthInput, utMacdSlowLengthInput, utMacdSignalLengthInput)
+utDashMacdLine := utMacdLineValue
+utDashMacdSignal := utMacdSignalValue
+utDashMacdHist := utMacdHistValue
+
+float utAtrNow = ta.atr(14)
+float utAtrSma20 = ta.sma(utAtrNow, 20)
+string utAtrHiLo = not na(utAtrNow) and not na(utAtrSma20) ? (utAtrNow > utAtrSma20 * 1.20 ? '🟢 High' : utAtrNow < utAtrSma20 * 0.80 ? '🔴 Low' : '— Mid') : '— Mid'
 
 bool utDashboardVisible = utModuleActive and utDashboardPanelInput
 if utDashboardVisible
@@ -1159,8 +1160,6 @@ if utDashboardVisible
     float utD = ta.sma(utK, utStochDInput)
     string utStochPos = not na(utK) and not na(utD) ? (utK > utD ? '🟢 Up' : utK < utD ? '🔴 Down' : '— Flat') : '— Flat'
     string utStochState = (not na(utK) ? utStochPos + ' but ' + (utK > 80 ? 'Overbought' : utK < 20 ? 'Oversold' : 'Neutral') : '— Flat')
-    float utAtrSma20 = ta.sma(utAtrNow, 20)
-    string utAtrHiLo = not na(utAtrNow) and not na(utAtrSma20) ? (utAtrNow > utAtrSma20 * 1.20 ? '🟢 High' : utAtrNow < utAtrSma20 * 0.80 ? '🔴 Low' : '— Mid') : '— Mid'
     float utRsi = ta.rsi(close, 14)
     float utTodayOpen = request.security(syminfo.tickerid, 'D', open)
     float utTodayClose = request.security(syminfo.tickerid, 'D', close)
