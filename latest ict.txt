@@ -878,41 +878,8 @@ float sessionRange = na
 var label sessionRangeLabel = na
 bool showAsianRange = show_asian_session and isBelowHourValidResolution()
 
-[asianLowerLine, asianUpperLine, asianMidLine, asianStartBox, asianEndBox] = drawSessionBase(
-    showAsianRange,
-    FromDate,
-    ToDate,
-    rth_low,
-    rth_high,
-    rth_mid,
-    line_border_color,
-    midline_border_color,
-    box_line_style,
-    middle_line_style,
-    boxLineWidth,
-    sessionLineWidth,
-    asianLowerLine,
-    asianUpperLine,
-    asianMidLine,
-    asianStartBox,
-    asianEndBox
-)
-[asianLowerExtLine, asianUpperExtLine, asianMidExtLine] = drawSessionExtensions(
-    showAsianRange,
-    LineFromDate,
-    LineToDate,
-    rth_low,
-    rth_high,
-    rth_mid,
-    line_border_color,
-    midline_border_color,
-    upperlower_line_style,
-    middle_line_style,
-    sessionLineWidth,
-    asianLowerExtLine,
-    asianUpperExtLine,
-    asianMidExtLine
-)
+[asianLowerLine, asianUpperLine, asianMidLine, asianStartBox, asianEndBox] = drawSessionBase(showAsianRange, FromDate, ToDate, rth_low, rth_high, rth_mid, line_border_color, midline_border_color, box_line_style, middle_line_style, boxLineWidth, sessionLineWidth, asianLowerLine, asianUpperLine, asianMidLine, asianStartBox, asianEndBox)
+[asianLowerExtLine, asianUpperExtLine, asianMidExtLine] = drawSessionExtensions(showAsianRange, LineFromDate, LineToDate, rth_low, rth_high, rth_mid, line_border_color, midline_border_color, upperlower_line_style, middle_line_style, sessionLineWidth, asianLowerExtLine, asianUpperExtLine, asianMidExtLine)
 
 
 highRes = rth_high
@@ -969,25 +936,7 @@ london_rth_high = float(na)
 london_rth_high := london_rth_is_open ? london_rth_open_bar ? high : math.max(london_rth_high[1], high) : london_rth_high[1]
 london_rth_mid = (london_rth_low + london_rth_high) / 2
 
-[londonLowerLine, londonUpperLine, londonMidLine, londonStartBox, londonEndBox] = drawSessionBase(
-    show_london_session and isValidResolution(),
-    LondonFromDate,
-    LondonToDate,
-    london_rth_low,
-    london_rth_high,
-    london_rth_mid,
-    lline_border_color,
-    lmidline_border_color,
-    lbox_line_style,
-    lmiddle_line_style,
-    lboxLineWidth,
-    lsessionLineWidth,
-    londonLowerLine,
-    londonUpperLine,
-    londonMidLine,
-    londonStartBox,
-    londonEndBox
-)
+[londonLowerLine, londonUpperLine, londonMidLine, londonStartBox, londonEndBox] = drawSessionBase(show_london_session and isValidResolution(), LondonFromDate, LondonToDate, london_rth_low, london_rth_high, london_rth_mid, lline_border_color, lmidline_border_color, lbox_line_style, lmiddle_line_style, lboxLineWidth, lsessionLineWidth, londonLowerLine, londonUpperLine, londonMidLine, londonStartBox, londonEndBox)
 
 
 
@@ -1044,25 +993,7 @@ ny_rth_high = float(na)
 ny_rth_high := ny_rth_is_open ? ny_rth_open_bar ? high : math.max(ny_rth_high[1], high) : ny_rth_high[1]
 ny_rth_mid = (ny_rth_low + ny_rth_high) / 2
 
-[nyLowerLine, nyUpperLine, nyMidLine, nyStartBox, nyEndBox] = drawSessionBase(
-    show_ny_session and isValidResolution(),
-    NyFromDate,
-    NyToDate,
-    ny_rth_low,
-    ny_rth_high,
-    ny_rth_mid,
-    nline_border_color,
-    nmidline_border_color,
-    nbox_line_style,
-    nmiddle_line_style,
-    nboxLineWidth,
-    nsessionLineWidth,
-    nyLowerLine,
-    nyUpperLine,
-    nyMidLine,
-    nyStartBox,
-    nyEndBox
-)
+[nyLowerLine, nyUpperLine, nyMidLine, nyStartBox, nyEndBox] = drawSessionBase(show_ny_session and isValidResolution(), NyFromDate, NyToDate, ny_rth_low, ny_rth_high, ny_rth_mid, nline_border_color, nmidline_border_color, nbox_line_style, nmiddle_line_style, nboxLineWidth, nsessionLineWidth, nyLowerLine, nyUpperLine, nyMidLine, nyStartBox, nyEndBox)
 
 
 
