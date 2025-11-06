@@ -320,27 +320,194 @@ updateRangeFillBox(box existing, bool visible, int left, int right, float top, f
         result := na
     result
 
-drawSessionBase(bool visible, int fromDate, int toDate, float lowPrice, float highPrice, float midPrice, color borderColor, color midColor, line_style borderStyle, line_style midStyle, int borderWidth, int midWidth) =>
-    if visible
-        line lowerLine = line.new(fromDate, lowPrice, toDate, lowPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
-        line.delete(lowerLine[1])
-        line upperLine = line.new(fromDate, highPrice, toDate, highPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
-        line.delete(upperLine[1])
-        line midLine = line.new(fromDate, midPrice, toDate, midPrice, xloc=xloc.bar_time, color=midColor, style=midStyle, width=midWidth)
-        line.delete(midLine[1])
-        line startBox = line.new(fromDate, highPrice, fromDate, lowPrice, extend=extend.none, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
-        line.delete(startBox[1])
-        line endBox = line.new(toDate, highPrice, toDate, lowPrice, extend=extend.none, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
-        line.delete(endBox[1])
+drawSessionBase(
+    bool visible,
+    int fromDate,
+    int toDate,
+    float lowPrice,
+    float highPrice,
+    float midPrice,
+    color borderColor,
+    color midColor,
+    line_style borderStyle,
+    line_style midStyle,
+    int borderWidth,
+    int midWidth,
+    line lowerLine,
+    line upperLine,
+    line midLine,
+    line startBox,
+    line endBox
+) =>
+    line _lowerLine = lowerLine
+    line _upperLine = upperLine
+    line _midLine = midLine
+    line _startBox = startBox
+    line _endBox = endBox
 
-drawSessionExtensions(bool visible, int fromDate, int toDate, float lowPrice, float highPrice, float midPrice, color borderColor, color midColor, line_style borderStyle, line_style midStyle, int lineWidth) =>
-    if visible
-        line lowerExt = line.new(fromDate, lowPrice, toDate, lowPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=lineWidth)
-        line.delete(lowerExt[1])
-        line upperExt = line.new(fromDate, highPrice, toDate, highPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=lineWidth)
-        line.delete(upperExt[1])
-        line midExt = line.new(fromDate, midPrice, toDate, midPrice, xloc=xloc.bar_time, color=midColor, style=midStyle, width=lineWidth)
-        line.delete(midExt[1])
+    if visible and not na(lowPrice) and not na(highPrice)
+        if na(_lowerLine)
+            _lowerLine := line.new(fromDate, lowPrice, toDate, lowPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
+        else
+            line.set_xy1(_lowerLine, fromDate, lowPrice)
+            line.set_xy2(_lowerLine, toDate, lowPrice)
+            line.set_color(_lowerLine, borderColor)
+            line.set_style(_lowerLine, borderStyle)
+            line.set_width(_lowerLine, borderWidth)
+            line.set_xloc(_lowerLine, xloc.bar_time)
+
+        if na(_upperLine)
+            _upperLine := line.new(fromDate, highPrice, toDate, highPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
+        else
+            line.set_xy1(_upperLine, fromDate, highPrice)
+            line.set_xy2(_upperLine, toDate, highPrice)
+            line.set_color(_upperLine, borderColor)
+            line.set_style(_upperLine, borderStyle)
+            line.set_width(_upperLine, borderWidth)
+            line.set_xloc(_upperLine, xloc.bar_time)
+
+        if not na(midPrice)
+            if na(_midLine)
+                _midLine := line.new(fromDate, midPrice, toDate, midPrice, xloc=xloc.bar_time, color=midColor, style=midStyle, width=midWidth)
+            else
+                line.set_xy1(_midLine, fromDate, midPrice)
+                line.set_xy2(_midLine, toDate, midPrice)
+                line.set_color(_midLine, midColor)
+                line.set_style(_midLine, midStyle)
+                line.set_width(_midLine, midWidth)
+                line.set_xloc(_midLine, xloc.bar_time)
+        else if not na(_midLine)
+            line.delete(_midLine)
+            _midLine := na
+
+        if na(_startBox)
+            _startBox := line.new(fromDate, highPrice, fromDate, lowPrice, extend=extend.none, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
+        else
+            line.set_xy1(_startBox, fromDate, highPrice)
+            line.set_xy2(_startBox, fromDate, lowPrice)
+            line.set_color(_startBox, borderColor)
+            line.set_style(_startBox, borderStyle)
+            line.set_width(_startBox, borderWidth)
+            line.set_xloc(_startBox, xloc.bar_time)
+            line.set_extend(_startBox, extend.none)
+
+        if na(_endBox)
+            _endBox := line.new(toDate, highPrice, toDate, lowPrice, extend=extend.none, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
+        else
+            line.set_xy1(_endBox, toDate, highPrice)
+            line.set_xy2(_endBox, toDate, lowPrice)
+            line.set_color(_endBox, borderColor)
+            line.set_style(_endBox, borderStyle)
+            line.set_width(_endBox, borderWidth)
+            line.set_xloc(_endBox, xloc.bar_time)
+            line.set_extend(_endBox, extend.none)
+    else
+        if not na(_lowerLine)
+            line.delete(_lowerLine)
+            _lowerLine := na
+        if not na(_upperLine)
+            line.delete(_upperLine)
+            _upperLine := na
+        if not na(_midLine)
+            line.delete(_midLine)
+            _midLine := na
+        if not na(_startBox)
+            line.delete(_startBox)
+            _startBox := na
+        if not na(_endBox)
+            line.delete(_endBox)
+            _endBox := na
+
+    [_lowerLine, _upperLine, _midLine, _startBox, _endBox]
+
+drawSessionExtensions(
+    bool visible,
+    int fromDate,
+    int toDate,
+    float lowPrice,
+    float highPrice,
+    float midPrice,
+    color borderColor,
+    color midColor,
+    line_style borderStyle,
+    line_style midStyle,
+    int lineWidth,
+    line lowerExt,
+    line upperExt,
+    line midExt
+) =>
+    line _lowerExt = lowerExt
+    line _upperExt = upperExt
+    line _midExt = midExt
+
+    if visible and not na(lowPrice) and not na(highPrice)
+        if na(_lowerExt)
+            _lowerExt := line.new(fromDate, lowPrice, toDate, lowPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=lineWidth)
+        else
+            line.set_xy1(_lowerExt, fromDate, lowPrice)
+            line.set_xy2(_lowerExt, toDate, lowPrice)
+            line.set_color(_lowerExt, borderColor)
+            line.set_style(_lowerExt, borderStyle)
+            line.set_width(_lowerExt, lineWidth)
+            line.set_xloc(_lowerExt, xloc.bar_time)
+
+        if na(_upperExt)
+            _upperExt := line.new(fromDate, highPrice, toDate, highPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=lineWidth)
+        else
+            line.set_xy1(_upperExt, fromDate, highPrice)
+            line.set_xy2(_upperExt, toDate, highPrice)
+            line.set_color(_upperExt, borderColor)
+            line.set_style(_upperExt, borderStyle)
+            line.set_width(_upperExt, lineWidth)
+            line.set_xloc(_upperExt, xloc.bar_time)
+
+        if not na(midPrice)
+            if na(_midExt)
+                _midExt := line.new(fromDate, midPrice, toDate, midPrice, xloc=xloc.bar_time, color=midColor, style=midStyle, width=lineWidth)
+            else
+                line.set_xy1(_midExt, fromDate, midPrice)
+                line.set_xy2(_midExt, toDate, midPrice)
+                line.set_color(_midExt, midColor)
+                line.set_style(_midExt, midStyle)
+                line.set_width(_midExt, lineWidth)
+                line.set_xloc(_midExt, xloc.bar_time)
+        else if not na(_midExt)
+            line.delete(_midExt)
+            _midExt := na
+    else
+        if not na(_lowerExt)
+            line.delete(_lowerExt)
+            _lowerExt := na
+        if not na(_upperExt)
+            line.delete(_upperExt)
+            _upperExt := na
+        if not na(_midExt)
+            line.delete(_midExt)
+            _midExt := na
+
+    [_lowerExt, _upperExt, _midExt]
+
+var line asianLowerLine = na
+var line asianUpperLine = na
+var line asianMidLine = na
+var line asianStartBox = na
+var line asianEndBox = na
+
+var line londonLowerLine = na
+var line londonUpperLine = na
+var line londonMidLine = na
+var line londonStartBox = na
+var line londonEndBox = na
+
+var line nyLowerLine = na
+var line nyUpperLine = na
+var line nyMidLine = na
+var line nyStartBox = na
+var line nyEndBox = na
+
+var line asianLowerExtLine = na
+var line asianUpperExtLine = na
+var line asianMidExtLine = na
 
 var box asianRangeFillBox = na
 var box londonRangeFillBox = na
@@ -752,8 +919,41 @@ float sessionRange = na
 var label sessionRangeLabel = na
 bool showAsianRange = show_asian_session and isBelowHourValidResolution()
 
-drawSessionBase(showAsianRange, FromDate, ToDate, rth_low, rth_high, rth_mid, line_border_color, midline_border_color, box_line_style, middle_line_style, boxLineWidth, sessionLineWidth)
-drawSessionExtensions(showAsianRange, LineFromDate, LineToDate, rth_low, rth_high, rth_mid, line_border_color, midline_border_color, upperlower_line_style, middle_line_style, sessionLineWidth)
+[asianLowerLine, asianUpperLine, asianMidLine, asianStartBox, asianEndBox] := drawSessionBase(
+    showAsianRange,
+    FromDate,
+    ToDate,
+    rth_low,
+    rth_high,
+    rth_mid,
+    line_border_color,
+    midline_border_color,
+    box_line_style,
+    middle_line_style,
+    boxLineWidth,
+    sessionLineWidth,
+    asianLowerLine,
+    asianUpperLine,
+    asianMidLine,
+    asianStartBox,
+    asianEndBox
+)
+[asianLowerExtLine, asianUpperExtLine, asianMidExtLine] := drawSessionExtensions(
+    showAsianRange,
+    LineFromDate,
+    LineToDate,
+    rth_low,
+    rth_high,
+    rth_mid,
+    line_border_color,
+    midline_border_color,
+    upperlower_line_style,
+    middle_line_style,
+    sessionLineWidth,
+    asianLowerExtLine,
+    asianUpperExtLine,
+    asianMidExtLine
+)
 
 
 highRes = rth_high
@@ -810,7 +1010,25 @@ london_rth_high = float(na)
 london_rth_high := london_rth_is_open ? london_rth_open_bar ? high : math.max(london_rth_high[1], high) : london_rth_high[1]
 london_rth_mid = (london_rth_low + london_rth_high) / 2
 
-drawSessionBase(show_london_session and isValidResolution(), LondonFromDate, LondonToDate, london_rth_low, london_rth_high, london_rth_mid, lline_border_color, lmidline_border_color, lbox_line_style, lmiddle_line_style, lboxLineWidth, lsessionLineWidth)
+[londonLowerLine, londonUpperLine, londonMidLine, londonStartBox, londonEndBox] := drawSessionBase(
+    show_london_session and isValidResolution(),
+    LondonFromDate,
+    LondonToDate,
+    london_rth_low,
+    london_rth_high,
+    london_rth_mid,
+    lline_border_color,
+    lmidline_border_color,
+    lbox_line_style,
+    lmiddle_line_style,
+    lboxLineWidth,
+    lsessionLineWidth,
+    londonLowerLine,
+    londonUpperLine,
+    londonMidLine,
+    londonStartBox,
+    londonEndBox
+)
 
 
 
@@ -867,7 +1085,25 @@ ny_rth_high = float(na)
 ny_rth_high := ny_rth_is_open ? ny_rth_open_bar ? high : math.max(ny_rth_high[1], high) : ny_rth_high[1]
 ny_rth_mid = (ny_rth_low + ny_rth_high) / 2
 
-drawSessionBase(show_ny_session and isValidResolution(), NyFromDate, NyToDate, ny_rth_low, ny_rth_high, ny_rth_mid, nline_border_color, nmidline_border_color, nbox_line_style, nmiddle_line_style, nboxLineWidth, nsessionLineWidth)
+[nyLowerLine, nyUpperLine, nyMidLine, nyStartBox, nyEndBox] := drawSessionBase(
+    show_ny_session and isValidResolution(),
+    NyFromDate,
+    NyToDate,
+    ny_rth_low,
+    ny_rth_high,
+    ny_rth_mid,
+    nline_border_color,
+    nmidline_border_color,
+    nbox_line_style,
+    nmiddle_line_style,
+    nboxLineWidth,
+    nsessionLineWidth,
+    nyLowerLine,
+    nyUpperLine,
+    nyMidLine,
+    nyStartBox,
+    nyEndBox
+)
 
 
 
