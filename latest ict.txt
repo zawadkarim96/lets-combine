@@ -320,20 +320,7 @@ updateRangeFillBox(box existing, bool visible, int left, int right, float top, f
         result := na
     result
 
-drawSessionBase(
-    bool visible,
-    int fromDate,
-    int toDate,
-    float lowPrice,
-    float highPrice,
-    float midPrice,
-    color borderColor,
-    color midColor,
-    line_style borderStyle,
-    line_style midStyle,
-    int borderWidth,
-    int midWidth
-) =>
+drawSessionBase(bool visible, int fromDate, int toDate, float lowPrice, float highPrice, float midPrice, color borderColor, color midColor, line_style borderStyle, line_style midStyle, int borderWidth, int midWidth) =>
     if visible
         line lowerLine = line.new(fromDate, lowPrice, toDate, lowPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
         line.delete(lowerLine[1])
@@ -346,19 +333,7 @@ drawSessionBase(
         line endBox = line.new(toDate, highPrice, toDate, lowPrice, extend=extend.none, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
         line.delete(endBox[1])
 
-drawSessionExtensions(
-    bool visible,
-    int fromDate,
-    int toDate,
-    float lowPrice,
-    float highPrice,
-    float midPrice,
-    color borderColor,
-    color midColor,
-    line_style borderStyle,
-    line_style midStyle,
-    int lineWidth
-) =>
+drawSessionExtensions(bool visible, int fromDate, int toDate, float lowPrice, float highPrice, float midPrice, color borderColor, color midColor, line_style borderStyle, line_style midStyle, int lineWidth) =>
     if visible
         line lowerExt = line.new(fromDate, lowPrice, toDate, lowPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=lineWidth)
         line.delete(lowerExt[1])
