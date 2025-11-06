@@ -320,25 +320,7 @@ updateRangeFillBox(box existing, bool visible, int left, int right, float top, f
         result := na
     result
 
-drawSessionBase(
-    bool visible,
-    int fromDate,
-    int toDate,
-    float lowPrice,
-    float highPrice,
-    float midPrice,
-    color borderColor,
-    color midColor,
-    line_style borderStyle,
-    line_style midStyle,
-    int borderWidth,
-    int midWidth,
-    line lowerLine,
-    line upperLine,
-    line midLine,
-    line startBox,
-    line endBox
-) =>
+drawSessionBase(bool visible, int fromDate, int toDate, float lowPrice, float highPrice, float midPrice, color borderColor, color midColor, borderStyle, midStyle, int borderWidth, int midWidth, line lowerLine, line upperLine, line midLine, line startBox, line endBox) =>
     line _lowerLine = lowerLine
     line _upperLine = upperLine
     line _midLine = midLine
@@ -354,7 +336,6 @@ drawSessionBase(
             line.set_color(_lowerLine, borderColor)
             line.set_style(_lowerLine, borderStyle)
             line.set_width(_lowerLine, borderWidth)
-            line.set_xloc(_lowerLine, xloc.bar_time)
 
         if na(_upperLine)
             _upperLine := line.new(fromDate, highPrice, toDate, highPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
@@ -364,7 +345,6 @@ drawSessionBase(
             line.set_color(_upperLine, borderColor)
             line.set_style(_upperLine, borderStyle)
             line.set_width(_upperLine, borderWidth)
-            line.set_xloc(_upperLine, xloc.bar_time)
 
         if not na(midPrice)
             if na(_midLine)
@@ -375,7 +355,6 @@ drawSessionBase(
                 line.set_color(_midLine, midColor)
                 line.set_style(_midLine, midStyle)
                 line.set_width(_midLine, midWidth)
-                line.set_xloc(_midLine, xloc.bar_time)
         else if not na(_midLine)
             line.delete(_midLine)
             _midLine := na
@@ -388,7 +367,6 @@ drawSessionBase(
             line.set_color(_startBox, borderColor)
             line.set_style(_startBox, borderStyle)
             line.set_width(_startBox, borderWidth)
-            line.set_xloc(_startBox, xloc.bar_time)
             line.set_extend(_startBox, extend.none)
 
         if na(_endBox)
@@ -399,7 +377,6 @@ drawSessionBase(
             line.set_color(_endBox, borderColor)
             line.set_style(_endBox, borderStyle)
             line.set_width(_endBox, borderWidth)
-            line.set_xloc(_endBox, xloc.bar_time)
             line.set_extend(_endBox, extend.none)
     else
         if not na(_lowerLine)
@@ -420,22 +397,7 @@ drawSessionBase(
 
     [_lowerLine, _upperLine, _midLine, _startBox, _endBox]
 
-drawSessionExtensions(
-    bool visible,
-    int fromDate,
-    int toDate,
-    float lowPrice,
-    float highPrice,
-    float midPrice,
-    color borderColor,
-    color midColor,
-    line_style borderStyle,
-    line_style midStyle,
-    int lineWidth,
-    line lowerExt,
-    line upperExt,
-    line midExt
-) =>
+drawSessionExtensions(bool visible, int fromDate, int toDate, float lowPrice, float highPrice, float midPrice, color borderColor, color midColor, borderStyle, midStyle, int lineWidth, line lowerExt, line upperExt, line midExt) =>
     line _lowerExt = lowerExt
     line _upperExt = upperExt
     line _midExt = midExt
@@ -449,7 +411,6 @@ drawSessionExtensions(
             line.set_color(_lowerExt, borderColor)
             line.set_style(_lowerExt, borderStyle)
             line.set_width(_lowerExt, lineWidth)
-            line.set_xloc(_lowerExt, xloc.bar_time)
 
         if na(_upperExt)
             _upperExt := line.new(fromDate, highPrice, toDate, highPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=lineWidth)
@@ -459,7 +420,6 @@ drawSessionExtensions(
             line.set_color(_upperExt, borderColor)
             line.set_style(_upperExt, borderStyle)
             line.set_width(_upperExt, lineWidth)
-            line.set_xloc(_upperExt, xloc.bar_time)
 
         if not na(midPrice)
             if na(_midExt)
@@ -470,7 +430,6 @@ drawSessionExtensions(
                 line.set_color(_midExt, midColor)
                 line.set_style(_midExt, midStyle)
                 line.set_width(_midExt, lineWidth)
-                line.set_xloc(_midExt, xloc.bar_time)
         else if not na(_midExt)
             line.delete(_midExt)
             _midExt := na
@@ -919,7 +878,7 @@ float sessionRange = na
 var label sessionRangeLabel = na
 bool showAsianRange = show_asian_session and isBelowHourValidResolution()
 
-[asianLowerLine, asianUpperLine, asianMidLine, asianStartBox, asianEndBox] := drawSessionBase(
+[asianLowerLine, asianUpperLine, asianMidLine, asianStartBox, asianEndBox] = drawSessionBase(
     showAsianRange,
     FromDate,
     ToDate,
@@ -938,7 +897,7 @@ bool showAsianRange = show_asian_session and isBelowHourValidResolution()
     asianStartBox,
     asianEndBox
 )
-[asianLowerExtLine, asianUpperExtLine, asianMidExtLine] := drawSessionExtensions(
+[asianLowerExtLine, asianUpperExtLine, asianMidExtLine] = drawSessionExtensions(
     showAsianRange,
     LineFromDate,
     LineToDate,
@@ -1010,7 +969,7 @@ london_rth_high = float(na)
 london_rth_high := london_rth_is_open ? london_rth_open_bar ? high : math.max(london_rth_high[1], high) : london_rth_high[1]
 london_rth_mid = (london_rth_low + london_rth_high) / 2
 
-[londonLowerLine, londonUpperLine, londonMidLine, londonStartBox, londonEndBox] := drawSessionBase(
+[londonLowerLine, londonUpperLine, londonMidLine, londonStartBox, londonEndBox] = drawSessionBase(
     show_london_session and isValidResolution(),
     LondonFromDate,
     LondonToDate,
@@ -1085,7 +1044,7 @@ ny_rth_high = float(na)
 ny_rth_high := ny_rth_is_open ? ny_rth_open_bar ? high : math.max(ny_rth_high[1], high) : ny_rth_high[1]
 ny_rth_mid = (ny_rth_low + ny_rth_high) / 2
 
-[nyLowerLine, nyUpperLine, nyMidLine, nyStartBox, nyEndBox] := drawSessionBase(
+[nyLowerLine, nyUpperLine, nyMidLine, nyStartBox, nyEndBox] = drawSessionBase(
     show_ny_session and isValidResolution(),
     NyFromDate,
     NyToDate,
