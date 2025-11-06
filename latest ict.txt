@@ -1120,18 +1120,20 @@ utSrLineL100 := updateUtSrLine(utSrLineL100, utSrVisible and not utSrConflicts(u
 utSrLineL50 := updateUtSrLine(utSrLineL50, utSrVisible and not utSrConflicts(utL50), utL50, close > utL50 ? color.green : color.red)
 utSrLineL10 := updateUtSrLine(utSrLineL10, utSrVisible and not utSrConflicts(utL10), utL10, close > utL10 ? color.green : color.red)
 
+
+
+
+
 var float utDashMacdLine = na
 var float utDashMacdSignal = na
 var float utDashMacdHist = na
-float utDashMacdLineValue = na
-float utDashMacdSignalValue = na
-float utDashMacdHistValue = na
-[utDashMacdLineValue, utDashMacdSignalValue, utDashMacdHistValue] = ta.macd(close, utMacdFastLengthInput, utMacdSlowLengthInput, utMacdSignalLengthInput)
-utDashMacdLine := utDashMacdLineValue
-utDashMacdSignal := utDashMacdSignalValue
-utDashMacdHist := utDashMacdHistValue
-
-float utAtrNow = ta.atr(14)
+float macdLineValue = na
+float macdSignalValue = na
+float macdHistValue = na
+[macdLineValue, macdSignalValue, macdHistValue] = ta.macd(close, utMacdFastLengthInput, utMacdSlowLengthInput, utMacdSignalLengthInput)
+utDashMacdLine := macdLineValue
+utDashMacdSignal := macdSignalValue
+utDashMacdHist := macdHistValue
 
 bool utDashboardVisible = utModuleActive and utDashboardPanelInput
 if utDashboardVisible
