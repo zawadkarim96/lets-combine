@@ -43,6 +43,13 @@ int utLongevityLabelOffsetInput = input.int(10, 'Label Offset (bars)', group=gro
 string groupUtAddOns = 'Add-ons (Panel & S/R)'
 bool utSrLinesInput = input.bool(false, 'Support & Resistance Lines', group=groupUtAddOns)
 int utVolMaLenInput = input.int(20, 'Volume MA Length', group=groupUtAddOns, minval=1)
+bool utDashboardPanelInput = input.bool(true, 'Dashboard Panel', group=groupUtAddOns)
+int utDashShiftBarsInput = input.int(60, 'Panel Right Shift (bars)', group=groupUtAddOns, minval=40, maxval=200)
+color utDashBackgroundColorInput = input.color(color.new(#8fd46d, 80), 'Panel Background', inline='dash', group=groupUtAddOns)
+color utDashTextColorInput = input.color(color.white, 'Text Color', inline='dash', group=groupUtAddOns)
+int utPanelAnchorBarsInput = input.int(300, 'Panel anchor bars (top-right)', group=groupUtAddOns, minval=100, maxval=9000)
+float utPanelPadPctInput = input.float(0.2, 'Panel vertical padding', group=groupUtAddOns, minval=0.0, maxval=0.40, step=0.005)
+string utPanelPlacementInput = input.string('Top-Right', 'Dashboard Placement', options=['Top-Right', 'Top-Left', 'Bottom-Right', 'Bottom-Left', 'Bottom-Center'], group=groupUtAddOns)
 
 string groupUtSupport = 'Support & Resistance'
 bool utShowSrInput = input.bool(true, 'Show Support & Resistance Lines', group=groupUtSupport)
@@ -1095,6 +1102,9 @@ var line utSrLineL100 = na
 var line utSrLineL50 = na
 var line utSrLineL10 = na
 
+var table utDashTable = na
+var string utDashPrevPlacement = ''
+
 utSrLineH1000 := updateUtSrLine(utSrLineH1000, utSrVisible and not utSrConflicts(utH1000), utH1000, close > utH1000 ? color.green : color.red)
 utSrLineH750 := updateUtSrLine(utSrLineH750, utSrVisible and not utSrConflicts(utH750), utH750, close > utH750 ? color.green : color.red)
 utSrLineH500 := updateUtSrLine(utSrLineH500, utSrVisible and not utSrConflicts(utH500), utH500, close > utH500 ? color.green : color.red)
@@ -1109,6 +1119,90 @@ utSrLineL250 := updateUtSrLine(utSrLineL250, utSrVisible and not utSrConflicts(u
 utSrLineL100 := updateUtSrLine(utSrLineL100, utSrVisible and not utSrConflicts(utL100), utL100, close > utL100 ? color.green : color.red)
 utSrLineL50 := updateUtSrLine(utSrLineL50, utSrVisible and not utSrConflicts(utL50), utL50, close > utL50 ? color.green : color.red)
 utSrLineL10 := updateUtSrLine(utSrLineL10, utSrVisible and not utSrConflicts(utL10), utL10, close > utL10 ? color.green : color.red)
+
+bool utDashboardVisible = utModuleActive and utDashboardPanelInput
+if utDashboardVisible
+    if na(utDashTable) or utPanelPlacementInput != utDashPrevPlacement
+        if not na(utDashTable)
+            table.clear(utDashTable, 0, 0, 0, 0)
+        utDashTable := switch utPanelPlacementInput
+            'Top-Right'     => table.new(position.top_right, 1, 1, border_width = 1)
+            'Top-Left'      => table.new(position.top_left, 1, 1, border_width = 1)
+            'Bottom-Right'  => table.new(position.bottom_right, 1, 1, border_width = 1)
+            'Bottom-Left'   => table.new(position.bottom_left, 1, 1, border_width = 1)
+            'Bottom-Center' => table.new(position.bottom_center, 1, 1, border_width = 1)
+            => table.new(position.top_right, 1, 1, border_width = 1)
+        utDashPrevPlacement := utPanelPlacementInput
+
+    float utVolNow = volume
+    float utVolMa = ta.sma(volume, utVolMaLenInput)
+    string utVolBias = not na(utVolMa) ? (utVolNow > utVolMa ? '🟢 Above Avg' : utVolNow < utVolMa ? '🔴 Below Avg' : '— Avg') : '— Avg'
+    float utVwapVal = ta.vwap(close)
+    string utVwapPos = not na(utVwapVal) ? (close > utVwapVal ? '🟢 Price Above' : close < utVwapVal ? '🔴 Price Below' : '— Price @') : '— Price n/a'
+    float utMacdLine = na
+    float utMacdSignalLine = na
+    float _utMacdHist = na
+    [utMacdLine, utMacdSignalLine, _utMacdHist] := ta.macd(close, utMacdFastLengthInput, utMacdSlowLengthInput, utMacdSignalLengthInput)
+    string utMacdBias = not na(utMacdLine) and not na(utMacdSignalLine) ? (utMacdLine > utMacdSignalLine ? '🟢 Bullish' : utMacdLine < utMacdSignalLine ? '🔴 Bearish' : '— Neutral') : '— Neutral'
+    float utK = ta.sma(ta.stoch(close, high, low, utStochLengthInput), utStochKInput)
+    float utD = ta.sma(utK, utStochDInput)
+    string utStochPos = not na(utK) and not na(utD) ? (utK > utD ? '🟢 Up' : utK < utD ? '🔴 Down' : '— Flat') : '— Flat'
+    string utStochState = (not na(utK) ? utStochPos + ' but ' + (utK > 80 ? 'Overbought' : utK < 20 ? 'Oversold' : 'Neutral') : '— Flat')
+    float utAtrNow = ta.atr(14)
+    float utAtrSma20 = ta.sma(utAtrNow, 20)
+    string utAtrHiLo = not na(utAtrNow) and not na(utAtrSma20) ? (utAtrNow > utAtrSma20 * 1.20 ? '🟢 High' : utAtrNow < utAtrSma20 * 0.80 ? '🔴 Low' : '— Mid') : '— Mid'
+    float utRsi = ta.rsi(close, 14)
+    float utTodayOpen = request.security(syminfo.tickerid, 'D', open)
+    float utTodayClose = request.security(syminfo.tickerid, 'D', close)
+    float utTodayHigh = request.security(syminfo.tickerid, 'D', high)
+    float utTodayLow = request.security(syminfo.tickerid, 'D', low)
+    string utTodayDirection = not na(utTodayOpen) and not na(utTodayClose) ? (utTodayClose > utTodayOpen ? '🟢↑' : utTodayClose < utTodayOpen ? '🔴↓' : '➖') : '➖'
+    float utTodayRangePct = not na(utTodayHigh) and not na(utTodayLow) ? (utTodayHigh - utTodayLow) / math.max(math.abs(utTodayLow), syminfo.mintick) * 100.0 : na
+    float utPrevHigh = request.security(syminfo.tickerid, 'D', high[1])
+    float utPrevLow = request.security(syminfo.tickerid, 'D', low[1])
+    float utPrevOpen = request.security(syminfo.tickerid, 'D', open[1])
+    float utPrevClose = request.security(syminfo.tickerid, 'D', close[1])
+    float utPrevRangePct = not na(utPrevHigh) and not na(utPrevLow) ? (utPrevHigh - utPrevLow) / math.max(math.abs(utPrevLow), syminfo.mintick) * 100.0 : na
+    string utPrevDayDirection = not na(utPrevOpen) and not na(utPrevClose) ? (utPrevClose > utPrevOpen ? '🟢↑' : utPrevClose < utPrevOpen ? '🔴↓' : '➖') : '➖'
+    string utAtrTpStr = utPosState == 1 and utBuyEnabled ? str.tostring(utTrailBuy, '#.#####') : utPosState == -1 and utSellEnabled ? str.tostring(utTrailSell, '#.#####') : '—'
+    string utAtrTpSide = utPosState == 1 ? ' (BUY)' : utPosState == -1 ? ' (SELL)' : ''
+    string utPanelText =
+         '📊 MARKET STATUS' +
+         '\n━━━━━━━━━━━━━━━━━' +
+         '\nVolatility       | ' + (not na(utVolatilityPercent) ? str.tostring(utVolatilityPercent, '##.##') + '%' : 'n/a') +
+         '\nVolume           | ' + str.tostring(utVolNow, '#.##') + ' (' + utVolBias + ')' +
+         '\nVWAP vs Price    | ' + utVwapPos +
+         '\nMACD Bias        | ' + utMacdBias +
+         '\nStoch Bias       | ' + utStochState +
+         '\nRSI              | ' + (not na(utRsi) ? str.tostring(utRsi, '##.##') : 'n/a') +
+         '\n' +
+         '\n📈 TREND Overall timeframes' +
+         '\n━━━━━━━━━━━━━━━━━' +
+         '\n 1m  | ' + trendStrHtF('1')   + '    2h | ' + trendStrHtF('120') +
+         '\n 5m  | ' + trendStrHtF('5')   + '    4h | ' + trendStrHtF('240') +
+         '\n15m  | ' + trendStrHtF('15')  + '    1D | ' + trendStrHtF('D') +
+         '\n30m  | ' + trendStrHtF('30')  + '    1W | ' + trendStrHtF('W') +
+         '\n 1h  | ' + trendStrHtF('60')  + '    1M | ' + trendStrHtF('M') +
+         '\n' +
+         '\n💰 PRICE POSITION' +
+         '\n━━━━━━━━━━━━━━━━━' +
+         '\nToday’s Range %       | ' + utTodayDirection + ' ' + (not na(utTodayRangePct) ? str.tostring(utTodayRangePct, '##.##') : 'n/a') +
+         '\nYesterday’s Range %   | ' + utPrevDayDirection + ' ' + (not na(utPrevRangePct) ? str.tostring(utPrevRangePct, '##.##') : 'n/a') +
+         '\nYesterday’s High      | ' + (not na(utPrevHigh) ? str.tostring(utPrevHigh, '#.#####') : 'n/a') +
+         '\nYesterday’s Low       | ' + (not na(utPrevLow) ? str.tostring(utPrevLow, '#.#####') : 'n/a') +
+         '\n' +
+         '\n━━━━━━━━━━━━━━━━━' +
+         '\n📊 ACTUAL IN TRADE PROGRESSION' +
+         '\n━━━━━━━━━━━━━━━━━' +
+         '\nATR state            | ' + utAtrHiLo + ' (' + (not na(utAtrNow) ? str.tostring(utAtrNow, '#.###') : 'n/a') + ')' +
+         '\nATR Trailing stop' + utAtrTpSide + ' | ' + utAtrTpStr
+
+    if not na(utDashTable)
+        table.cell(utDashTable, 0, 0, text = utPanelText, text_color = utDashTextColorInput, text_size = size.small, text_halign = text.align_left, text_valign = text.align_top, bgcolor = utDashBackgroundColorInput)
+else if not na(utDashTable)
+    table.clear(utDashTable, 0, 0, 0, 0)
+    utDashTable := na
+    utDashPrevPlacement := ''
 
 
 
@@ -2334,10 +2428,12 @@ showMonthlyLevelsInput          = input(        false,      'Monthly',   group =
 monthlyLevelsStyleInput         = input.string( SOLID,      '',         group = LEVELS_GROUP,   inline = 'monthly', options = [SOLID,DASHED,DOTTED])
 monthlyLevelsColorInput         = input(        BLUE,       '',         group = LEVELS_GROUP,   inline = 'monthly')
 
-showPremiumDiscountZonesInput   = input(        false,      'Premium/Discount Zones',   group = ZONES_GROUP )
-premiumZoneColorInput           = input.color(  RED,        'Premium Zone',             group = ZONES_GROUP)
-equilibriumZoneColorInput       = input.color(  GRAY,       'Equilibrium Zone',         group = ZONES_GROUP)
-discountZoneColorInput          = input.color(  GREEN,      'Discount Zone',            group = ZONES_GROUP)
+showPremiumDiscountZonesInput   = input.bool(   false,      'Premium/Discount Zones',   group = ZONES_GROUP )
+pdSrPeriodInput                 = input.int(    50,         'Premium & Discount Lookback Period', minval = 10, step = 10, group = ZONES_GROUP)
+showPremiumDiscountMacroInput   = input.bool(   true,       'Show Macro Zones',         group = ZONES_GROUP )
+pdMacroPeriodInput              = input.int(    200,        'Macro Lookback Period',    minval = 10, step = 10, group = ZONES_GROUP)
+pdDiscountColorInput            = input.color(  color.new(#79c1f1, 0), 'Discount Color', group = ZONES_GROUP)
+pdPremiumColorInput             = input.color(  color.new(#f19579, 0), 'Premium Color',  group = ZONES_GROUP)
 
 
 
@@ -2419,8 +2515,8 @@ var swingBullishColor               = styleInput == MONOCHROME ? MONO_BULLISH : 
 var swingBearishColor               = styleInput == MONOCHROME ? MONO_BEARISH : swingBearColorInput
 var fairValueGapBullishColor        = styleInput == MONOCHROME ? color.new(MONO_BULLISH,70) : fairValueGapsBullColorInput
 var fairValueGapBearishColor        = styleInput == MONOCHROME ? color.new(MONO_BEARISH,70) : fairValueGapsBearColorInput
-var premiumZoneColor                = styleInput == MONOCHROME ? MONO_BEARISH : premiumZoneColorInput
-var discountZoneColor               = styleInput == MONOCHROME ? MONO_BULLISH : discountZoneColorInput
+color pdPremiumZoneColor            = styleInput == MONOCHROME ? MONO_BEARISH : pdPremiumColorInput
+color pdDiscountZoneColor           = styleInput == MONOCHROME ? MONO_BULLISH : pdDiscountColorInput
 varip int currentBarIndex           = bar_index
 varip int lastBarIndex              = bar_index
 alerts currentAlerts                = alerts.new()
@@ -2772,22 +2868,261 @@ drawHighLowSwings() =>
     bottomLabel.set_point(      chart.point.new(rightTimeBar, na, trailing.bottom))
     bottomLabel.set_text(       swingTrend.bias == BULLISH ? 'Strong Low' : 'Weak Low')
 
-drawZone(float labelLevel, int labelIndex, float top, float bottom, string tag, color zoneColor, string style) =>
-    var label l_abel    = label.new(na,na,text = tag, color=na,textcolor = zoneColor, style = style, size = size.small)
-    var box b_ox        = box.new(na,na,na,na,bgcolor = color.new(zoneColor,80),border_color = na, xloc = xloc.bar_time)
+var box pdSrUpperBox = na
+var box pdSrLowerBox = na
+var box pdMacroUpperBox = na
+var box pdMacroLowerBox = na
+var box pdMidBox = na
+var line pdSrEquilibriumLine = na
+var line pdMacroEquilibriumLine = na
+var table pdMacroDeltaTable = na
 
-    b_ox.set_top_left_point(    chart.point.new(trailing.barTime,na,top))
-    b_ox.set_bottom_right_point(chart.point.new(last_bar_time,na,bottom))
+pdDeleteVisuals() =>
+    if not na(pdSrUpperBox)
+        box.delete(pdSrUpperBox)
+        pdSrUpperBox := na
+    if not na(pdSrLowerBox)
+        box.delete(pdSrLowerBox)
+        pdSrLowerBox := na
+    if not na(pdMacroUpperBox)
+        box.delete(pdMacroUpperBox)
+        pdMacroUpperBox := na
+    if not na(pdMacroLowerBox)
+        box.delete(pdMacroLowerBox)
+        pdMacroLowerBox := na
+    if not na(pdMidBox)
+        box.delete(pdMidBox)
+        pdMidBox := na
+    if not na(pdSrEquilibriumLine)
+        line.delete(pdSrEquilibriumLine)
+        pdSrEquilibriumLine := na
+    if not na(pdMacroEquilibriumLine)
+        line.delete(pdMacroEquilibriumLine)
+        pdMacroEquilibriumLine := na
+    if not na(pdMacroDeltaTable)
+        table.clear(pdMacroDeltaTable, 0, 0, 0, 0)
+        pdMacroDeltaTable := na
 
-    l_abel.set_point(           chart.point.new(na,labelIndex,labelLevel))
+pdClampPercent(float value) => math.max(-100.0, math.min(100.0, value))
 
-drawPremiumDiscountZones() =>
-    drawZone(trailing.top, math.round(0.5*(trailing.barIndex + last_bar_index)), trailing.top, 0.95*trailing.top + 0.05*trailing.bottom, 'Premium', premiumZoneColor, label.style_label_down)
+pdUpdatePremiumDiscount() =>
+    bool srEnabled = showPremiumDiscountZonesInput
+    bool macroEnabled = showPremiumDiscountMacroInput
+    if not srEnabled and not macroEnabled
+        pdDeleteVisuals()
+        return
 
-    equilibriumLevel = (trailing.top + trailing.bottom) / 2
-    drawZone(equilibriumLevel, last_bar_index, 0.525*trailing.top + 0.475*trailing.bottom, 0.525*trailing.bottom + 0.475*trailing.top, 'Equilibrium', equilibriumZoneColorInput, label.style_label_left)
+    if not barstate.islast
+        return
 
-    drawZone(trailing.bottom, math.round(0.5*(trailing.barIndex + last_bar_index)), 0.95*trailing.bottom + 0.05*trailing.top, trailing.bottom, 'Discount', discountZoneColor, label.style_label_up)
+    float atrValue = ta.atr(200) * 0.8
+    int srLookback = math.min(pdSrPeriodInput, bar_index + 1)
+    int macroLookback = math.min(pdMacroPeriodInput, bar_index + 1)
+
+    color premiumColor = pdPremiumZoneColor
+    color discountColor = pdDiscountZoneColor
+
+    float srHighMax = na
+    float srLowMin = na
+    float srPosVolSum = 0.0
+    float srNegVolSum = 0.0
+    int srPosCount = 0
+    int srNegCount = 0
+    if srEnabled and srLookback > 0
+        for i = 0 to srLookback - 1
+            float h = high[i]
+            float l = low[i]
+            srHighMax := na(srHighMax) ? h : math.max(srHighMax, h)
+            srLowMin := na(srLowMin) ? l : math.min(srLowMin, l)
+            if close[i] > open[i]
+                srPosVolSum += volume[i]
+                srPosCount += 1
+            else if close[i] < open[i]
+                srNegVolSum -= volume[i]
+                srNegCount += 1
+
+    float srDelta = na
+    if srEnabled and srLookback > 0 and not na(srHighMax) and not na(srLowMin)
+        float srPosAvg = srPosCount > 0 ? srPosVolSum / srPosCount : na
+        float srNegAvg = srNegCount > 0 ? srNegVolSum / srNegCount : na
+        srDelta := not na(srPosAvg) and srPosAvg != 0 and not na(srNegAvg) ? pdClampPercent((srNegAvg / srPosAvg + 1.0) * 100.0) : na
+
+    float macroHighMax = na
+    float macroLowMin = na
+    float macroPosVolSum = 0.0
+    float macroNegVolSum = 0.0
+    int macroPosCount = 0
+    int macroNegCount = 0
+    if macroEnabled and macroLookback > 0
+        for i = 0 to macroLookback - 1
+            float h = high[i]
+            float l = low[i]
+            macroHighMax := na(macroHighMax) ? h : math.max(macroHighMax, h)
+            macroLowMin := na(macroLowMin) ? l : math.min(macroLowMin, l)
+            if close[i] > open[i]
+                macroPosVolSum += volume[i]
+                macroPosCount += 1
+            else if close[i] < open[i]
+                macroNegVolSum -= volume[i]
+                macroNegCount += 1
+
+    float macroDelta = na
+    if macroEnabled and macroLookback > 0 and not na(macroHighMax) and not na(macroLowMin)
+        float macroPosAvg = macroPosCount > 0 ? macroPosVolSum / macroPosCount : na
+        float macroNegAvg = macroNegCount > 0 ? macroNegVolSum / macroNegCount : na
+        macroDelta := not na(macroPosAvg) and macroPosAvg != 0 and not na(macroNegAvg) ? pdClampPercent((macroNegAvg / macroPosAvg + 1.0) * 100.0) : na
+
+    int srStartIndex = math.max(bar_index - srLookback + 1, 0)
+    int srEndIndex = bar_index + 50
+    int macroStartIndex = math.max(bar_index - macroLookback + 1, 0)
+    int macroEndIndex = bar_index + 70
+
+    if srEnabled and srLookback > 0 and not na(srHighMax) and not na(srLowMin)
+        float srUpperTop = srHighMax + atrValue
+        float srUpperBottom = srHighMax
+        float srLowerTop = srLowMin
+        float srLowerBottom = srLowMin - atrValue
+        string srPremiumText = 'PREMIUM: ' + str.tostring(math.abs(srNegVolSum), format.volume)
+        string srDiscountText = 'DISCOUNT: ' + str.tostring(srPosVolSum, format.volume)
+        if na(pdSrUpperBox)
+            pdSrUpperBox := box.new(srStartIndex, srUpperTop, srEndIndex, srUpperBottom, border_color = premiumColor, bgcolor = color.new(premiumColor, 100), xloc = xloc.bar_index, text = srPremiumText, text_color = chart.fg_color, text_size = size.small, text_halign = text.align_right, text_valign = text.align_top)
+        else
+            box.set_left(pdSrUpperBox, srStartIndex)
+            box.set_right(pdSrUpperBox, srEndIndex)
+            box.set_top(pdSrUpperBox, srUpperTop)
+            box.set_bottom(pdSrUpperBox, srUpperBottom)
+            box.set_border_color(pdSrUpperBox, premiumColor)
+            box.set_bgcolor(pdSrUpperBox, color.new(premiumColor, 100))
+            box.set_text(pdSrUpperBox, srPremiumText)
+            box.set_text_color(pdSrUpperBox, chart.fg_color)
+            box.set_text_size(pdSrUpperBox, size.small)
+            box.set_text_halign(pdSrUpperBox, text.align_right)
+            box.set_text_valign(pdSrUpperBox, text.align_top)
+
+        if na(pdSrLowerBox)
+            pdSrLowerBox := box.new(srStartIndex, srLowerTop, srEndIndex, srLowerBottom, border_color = discountColor, bgcolor = color.new(discountColor, 100), xloc = xloc.bar_index, text = srDiscountText, text_color = chart.fg_color, text_size = size.small, text_halign = text.align_right, text_valign = text.align_bottom)
+        else
+            box.set_left(pdSrLowerBox, srStartIndex)
+            box.set_right(pdSrLowerBox, srEndIndex)
+            box.set_top(pdSrLowerBox, srLowerTop)
+            box.set_bottom(pdSrLowerBox, srLowerBottom)
+            box.set_border_color(pdSrLowerBox, discountColor)
+            box.set_bgcolor(pdSrLowerBox, color.new(discountColor, 100))
+            box.set_text(pdSrLowerBox, srDiscountText)
+            box.set_text_color(pdSrLowerBox, chart.fg_color)
+            box.set_text_size(pdSrLowerBox, size.small)
+            box.set_text_halign(pdSrLowerBox, text.align_right)
+            box.set_text_valign(pdSrLowerBox, text.align_bottom)
+
+        float srEquilibrium = math.avg(srLowerTop, srUpperBottom)
+        if na(pdSrEquilibriumLine)
+            pdSrEquilibriumLine := line.new(srStartIndex, srEquilibrium, srEndIndex, srEquilibrium, xloc = xloc.bar_index, extend = extend.none, color = chart.fg_color, style = line.style_dashed)
+        else
+            line.set_xy1(pdSrEquilibriumLine, srStartIndex, srEquilibrium)
+            line.set_xy2(pdSrEquilibriumLine, srEndIndex, srEquilibrium)
+            line.set_color(pdSrEquilibriumLine, chart.fg_color)
+            line.set_style(pdSrEquilibriumLine, line.style_dashed)
+
+        float srMidTop = srUpperBottom
+        float srMidBottom = srLowerTop
+        string srDeltaText = 'Delta Volume\n' + (not na(srDelta) ? str.tostring(srDelta, format.percent) : 'n/a')
+        color srDeltaColor = not na(srDelta) and srDelta > 0 ? discountColor : premiumColor
+        color srDeltaBg = color.new(srDeltaColor, 93)
+        if na(pdMidBox)
+            pdMidBox := box.new(srStartIndex, srMidTop, srEndIndex, srMidBottom, border_color = na, bgcolor = srDeltaBg, xloc = xloc.bar_index, text = srDeltaText, text_color = srDeltaColor, text_size = size.normal, text_halign = text.align_right, text_valign = text.align_bottom)
+        else
+            box.set_left(pdMidBox, srStartIndex)
+            box.set_right(pdMidBox, srEndIndex)
+            box.set_top(pdMidBox, srMidTop)
+            box.set_bottom(pdMidBox, srMidBottom)
+            box.set_bgcolor(pdMidBox, srDeltaBg)
+            box.set_text(pdMidBox, srDeltaText)
+            box.set_text_color(pdMidBox, srDeltaColor)
+            box.set_text_size(pdMidBox, size.normal)
+            box.set_text_halign(pdMidBox, text.align_right)
+            box.set_text_valign(pdMidBox, text.align_bottom)
+    else
+        if not na(pdSrUpperBox)
+            box.delete(pdSrUpperBox)
+            pdSrUpperBox := na
+        if not na(pdSrLowerBox)
+            box.delete(pdSrLowerBox)
+            pdSrLowerBox := na
+        if not na(pdSrEquilibriumLine)
+            line.delete(pdSrEquilibriumLine)
+            pdSrEquilibriumLine := na
+        if not na(pdMidBox)
+            box.delete(pdMidBox)
+            pdMidBox := na
+
+    if macroEnabled and macroLookback > 0 and not na(macroHighMax) and not na(macroLowMin)
+        float macroUpperTop = macroHighMax + atrValue
+        float macroUpperBottom = macroHighMax
+        float macroLowerTop = macroLowMin
+        float macroLowerBottom = macroLowMin - atrValue
+        string macroPremiumText = str.tostring(math.abs(macroNegVolSum), format.volume)
+        string macroDiscountText = str.tostring(macroPosVolSum, format.volume)
+        if na(pdMacroUpperBox)
+            pdMacroUpperBox := box.new(macroStartIndex, macroUpperTop, macroEndIndex, macroUpperBottom, border_color = premiumColor, bgcolor = color.new(premiumColor, 60), xloc = xloc.bar_index, text = macroPremiumText, text_color = chart.fg_color, text_size = size.small, text_halign = srEnabled ? text.align_right : text.align_center, text_valign = text.align_top)
+        else
+            box.set_left(pdMacroUpperBox, macroStartIndex)
+            box.set_right(pdMacroUpperBox, macroEndIndex)
+            box.set_top(pdMacroUpperBox, macroUpperTop)
+            box.set_bottom(pdMacroUpperBox, macroUpperBottom)
+            box.set_border_color(pdMacroUpperBox, premiumColor)
+            box.set_bgcolor(pdMacroUpperBox, color.new(premiumColor, 60))
+            box.set_text(pdMacroUpperBox, macroPremiumText)
+            box.set_text_color(pdMacroUpperBox, chart.fg_color)
+            box.set_text_size(pdMacroUpperBox, size.small)
+            box.set_text_halign(pdMacroUpperBox, srEnabled ? text.align_right : text.align_center)
+            box.set_text_valign(pdMacroUpperBox, text.align_top)
+
+        if na(pdMacroLowerBox)
+            pdMacroLowerBox := box.new(macroStartIndex, macroLowerTop, macroEndIndex, macroLowerBottom, border_color = discountColor, bgcolor = color.new(discountColor, 60), xloc = xloc.bar_index, text = macroDiscountText, text_color = chart.fg_color, text_size = size.small, text_halign = srEnabled ? text.align_right : text.align_center, text_valign = text.align_bottom)
+        else
+            box.set_left(pdMacroLowerBox, macroStartIndex)
+            box.set_right(pdMacroLowerBox, macroEndIndex)
+            box.set_top(pdMacroLowerBox, macroLowerTop)
+            box.set_bottom(pdMacroLowerBox, macroLowerBottom)
+            box.set_border_color(pdMacroLowerBox, discountColor)
+            box.set_bgcolor(pdMacroLowerBox, color.new(discountColor, 60))
+            box.set_text(pdMacroLowerBox, macroDiscountText)
+            box.set_text_color(pdMacroLowerBox, chart.fg_color)
+            box.set_text_size(pdMacroLowerBox, size.small)
+            box.set_text_halign(pdMacroLowerBox, srEnabled ? text.align_right : text.align_center)
+            box.set_text_valign(pdMacroLowerBox, text.align_bottom)
+
+        float macroEquilibrium = math.avg(macroLowerTop, macroUpperBottom)
+        if not srEnabled
+            if na(pdMacroEquilibriumLine)
+                pdMacroEquilibriumLine := line.new(macroStartIndex, macroEquilibrium, macroEndIndex, macroEquilibrium, xloc = xloc.bar_index, extend = extend.none, color = chart.fg_color, style = line.style_dashed)
+            else
+                line.set_xy1(pdMacroEquilibriumLine, macroStartIndex, macroEquilibrium)
+                line.set_xy2(pdMacroEquilibriumLine, macroEndIndex, macroEquilibrium)
+                line.set_color(pdMacroEquilibriumLine, chart.fg_color)
+                line.set_style(pdMacroEquilibriumLine, line.style_dashed)
+        else if not na(pdMacroEquilibriumLine)
+            line.delete(pdMacroEquilibriumLine)
+            pdMacroEquilibriumLine := na
+
+        color macroDeltaColor = not na(macroDelta) and macroDelta > 0 ? discountColor : premiumColor
+        if na(pdMacroDeltaTable)
+            pdMacroDeltaTable := table.new(position.top_right, 1, 1)
+        string macroDeltaText = 'Macro\n Delta Volume:\n' + (not na(macroDelta) ? str.tostring(macroDelta, format.percent) : 'n/a')
+        table.cell(pdMacroDeltaTable, 0, 0, text = macroDeltaText, text_color = macroDeltaColor, text_size = size.large)
+    else
+        if not na(pdMacroUpperBox)
+            box.delete(pdMacroUpperBox)
+            pdMacroUpperBox := na
+        if not na(pdMacroLowerBox)
+            box.delete(pdMacroLowerBox)
+            pdMacroLowerBox := na
+        if not na(pdMacroEquilibriumLine)
+            line.delete(pdMacroEquilibriumLine)
+            pdMacroEquilibriumLine := na
+        if not na(pdMacroDeltaTable)
+            table.clear(pdMacroDeltaTable, 0, 0, 0, 0)
+            pdMacroDeltaTable := na
 
 parsedOpen  = showTrendInput ? open : na
 candleColor = internalTrend.bias == BULLISH ? swingBullishColor : swingBearishColor
@@ -2796,11 +3131,10 @@ plotcandle(parsedOpen,high,low,close,color = candleColor, wickcolor = candleColo
 if showHighLowSwingsInput or showPremiumDiscountZonesInput
     updateTrailingExtremes()
 
-    if showHighLowSwingsInput
-        drawHighLowSwings()
+if showHighLowSwingsInput
+    drawHighLowSwings()
 
-    if showPremiumDiscountZonesInput
-        drawPremiumDiscountZones()
+pdUpdatePremiumDiscount()
 
 if showFairValueGapsInput
     deleteFairValueGaps()
@@ -2871,6 +3205,8 @@ var float vwapsum = na
 var float volumesum = na
 var float v2sum = na
 var float prevwap = na
+var line prevVwapLine = na
+var int prevVwapLineStartIndex = na
 vwapsum := newSession ? hl2 * volume : nz(vwapsum[1]) + hl2 * volume
 volumesum := newSession ? volume : nz(volumesum[1]) + volume
 v2sum := newSession ? volume * hl2 * hl2 : nz(v2sum[1]) + volume * hl2 * hl2
@@ -2880,6 +3216,7 @@ vwapAboveColor = input.color(color.green, title="VWAP Above Color", inline="VWAP
 vwapBelowColor = input.color(color.red, title="VWAP Below Color", inline="VWAP")
 prevVwapAboveColor = input.color(color.green, title="Prev VWAP Above Color", inline="PVWAP")
 prevVwapBelowColor = input.color(color.red, title="Prev VWAP Below Color", inline="PVWAP")
+extendPrevVWAPInput = input.bool(true, title="Extend Previous VWAP", inline="PVWAP")
 showBcol = input.bool(false, title="Show barcolors")
 showPrevVWAP = input.bool(false, title="Show previous VWAP close")
 Coloring = close > myvwap ? vwapAboveColor : vwapBelowColor
@@ -2935,6 +3272,34 @@ utBuyAlertCondition = utAllowEntries and utBuySignalConfirmed
 utSellAlertCondition = utAllowEntries and utSellSignalConfirmed
 
 prevwap := newSession ? myvwap[1] : prevwap[1]
+
+if extendPrevVWAPInput and showPrevVWAP
+    if newSession
+        float prevSessionVwap = myvwap[1]
+        if not na(prevSessionVwap)
+            prevVwapLineStartIndex := bar_index
+            if na(prevVwapLine)
+                prevVwapLine := line.new(bar_index, prevSessionVwap, bar_index, prevSessionVwap, xloc = xloc.bar_index, extend = extend.right, color = close > prevSessionVwap ? prevVwapAboveColor : prevVwapBelowColor)
+            else
+                line.set_xy1(prevVwapLine, bar_index, prevSessionVwap)
+                line.set_xy2(prevVwapLine, bar_index, prevSessionVwap)
+                line.set_extend(prevVwapLine, extend.right)
+            line.set_color(prevVwapLine, close > prevSessionVwap ? prevVwapAboveColor : prevVwapBelowColor)
+        else if not na(prevVwapLine)
+            line.delete(prevVwapLine)
+            prevVwapLine := na
+            prevVwapLineStartIndex := na
+    else if not na(prevVwapLine) and not na(prevwap)
+        if not na(prevVwapLineStartIndex)
+            line.set_xy1(prevVwapLine, prevVwapLineStartIndex, prevwap)
+        line.set_xy2(prevVwapLine, bar_index, prevwap)
+        line.set_extend(prevVwapLine, extend.right)
+        line.set_color(prevVwapLine, close > prevwap ? prevVwapAboveColor : prevVwapBelowColor)
+else if not na(prevVwapLine)
+    line.delete(prevVwapLine)
+    prevVwapLine := na
+    prevVwapLineStartIndex := na
+
 plot(showPrevVWAP ? prevwap : na, style=plot.style_circles, color=close > prevwap ? prevVwapAboveColor : prevVwapBelowColor)
 A = plot(av, style=plot.style_circles, color=Coloring)
 barcolor(finalBarColor)
