@@ -172,6 +172,36 @@ var utLowerLevels = array.new<utLevel>()
 var utUpperDrawings = array.new<utDrawing>()
 var utLowerDrawings = array.new<utDrawing>()
 
+clearUtDrawings(utDrawing[] drawings) =>
+    if array.size(drawings) > 0
+        for i = 0 to array.size(drawings) - 1
+            drawing = array.get(drawings, i)
+            line.delete(drawing.top)
+            line.delete(drawing.bot)
+            if not na(drawing.fill)
+                linefill.delete(drawing.fill)
+            label.delete(drawing.lbl)
+        array.clear(drawings)
+
+renderUtLevels(utLevel[] levels, color zoneColor, utDrawing[] drawings) =>
+    if array.size(levels) > 0
+        for i = 0 to array.size(levels) - 1
+            level = array.get(levels, i)
+            int duration = bar_index - level.start
+            int daysTot = int(duration * (timeframe.in_seconds(timeframe.period) / 86400))
+            string txt = daysTot >= 365
+              ? str.tostring(int(daysTot / 365)) + ' Y (' + str.tostring(duration) + ' bars)'
+              : daysTot >= 30
+                ? str.tostring(int(daysTot / 30)) + ' M (' + str.tostring(duration) + ' bars)'
+                : str.tostring(daysTot) + ' D (' + str.tostring(duration) + ' bars)'
+            int labelX = utLongevityLabelsAtRoot ? level.start : bar_index + utLongevityLabelOffsetInput
+            float labelY = (level.top + level.bot) / 2
+            line topLine = line.new(level.start, level.top, bar_index, level.top, color=zoneColor, width=8)
+            line botLine = line.new(level.start, level.bot, bar_index, level.bot, color=zoneColor, width=8)
+            linefill fillRef = linefill.new(topLine, botLine, color=zoneColor)
+            label lblRef = label.new(labelX, labelY, txt, style=label.style_label_center, textcolor=color.white, color=color.new(color.black, 0))
+            array.push(drawings, utDrawing.new(topLine, botLine, fillRef, lblRef))
+
 float utHighestSeries = ta.highest(utLongevityLengthInput)
 float utLowestSeries = ta.lowest(utLongevityLengthInput)
 bool utHighPivot = high[1] == utHighestSeries[1] and high < utHighestSeries
@@ -202,69 +232,13 @@ if utZonesActive
             array.remove(utLowerLevels, i)
 
 if barstate.islast and utZonesActive
-    if array.size(utUpperDrawings) > 0
-        for i = 0 to array.size(utUpperDrawings) - 1
-            d = array.get(utUpperDrawings, i)
-            line.delete(d.top)
-            line.delete(d.bot)
-            if not na(d.fill)
-                linefill.delete(d.fill)
-            label.delete(d.lbl)
-        array.clear(utUpperDrawings)
-    if array.size(utLowerDrawings) > 0
-        for i = 0 to array.size(utLowerDrawings) - 1
-            d = array.get(utLowerDrawings, i)
-            line.delete(d.top)
-            line.delete(d.bot)
-            if not na(d.fill)
-                linefill.delete(d.fill)
-            label.delete(d.lbl)
-        array.clear(utLowerDrawings)
-    if array.size(utUpperLevels) > 0
-        for i = 0 to array.size(utUpperLevels) - 1
-            z = array.get(utUpperLevels, i)
-            l1 = line.new(z.start, z.top, bar_index, z.top, color=utLongevityUpperColorInput, width=8)
-            l2 = line.new(z.start, z.bot, bar_index, z.bot, color=utLongevityUpperColorInput, width=8)
-            f = linefill.new(l1, l2, color=utLongevityUpperColorInput)
-            dur = bar_index - z.start
-            daysTot = int(dur * (timeframe.in_seconds(timeframe.period) / 86400))
-            txt = daysTot >= 365 ? str.tostring(int(daysTot / 365)) + ' Y (' + str.tostring(dur) + ' bars)' : daysTot >= 30 ? str.tostring(int(daysTot / 30)) + ' M (' + str.tostring(dur) + ' bars)' : str.tostring(daysTot) + ' D (' + str.tostring(dur) + ' bars)'
-            lx = utLongevityLabelsAtRoot ? z.start : bar_index + utLongevityLabelOffsetInput
-            ly = (z.top + z.bot) / 2
-            lbl = label.new(lx, ly, txt, style=label.style_label_center, textcolor=color.white, color=color.new(color.black, 0))
-            array.push(utUpperDrawings, utDrawing.new(l1, l2, f, lbl))
-    if array.size(utLowerLevels) > 0
-        for i = 0 to array.size(utLowerLevels) - 1
-            z = array.get(utLowerLevels, i)
-            l1 = line.new(z.start, z.top, bar_index, z.top, color=utLongevityLowerColorInput, width=8)
-            l2 = line.new(z.start, z.bot, bar_index, z.bot, color=utLongevityLowerColorInput, width=8)
-            f = linefill.new(l1, l2, color=utLongevityLowerColorInput)
-            dur = bar_index - z.start
-            daysTot = int(dur * (timeframe.in_seconds(timeframe.period) / 86400))
-            txt = daysTot >= 365 ? str.tostring(int(daysTot / 365)) + ' Y (' + str.tostring(dur) + ' bars)' : daysTot >= 30 ? str.tostring(int(daysTot / 30)) + ' M (' + str.tostring(dur) + ' bars)' : str.tostring(daysTot) + ' D (' + str.tostring(dur) + ' bars)'
-            lx = utLongevityLabelsAtRoot ? z.start : bar_index + utLongevityLabelOffsetInput
-            ly = (z.top + z.bot) / 2
-            lbl = label.new(lx, ly, txt, style=label.style_label_center, textcolor=color.white, color=color.new(color.black, 0))
-            array.push(utLowerDrawings, utDrawing.new(l1, l2, f, lbl))
+    clearUtDrawings(utUpperDrawings)
+    clearUtDrawings(utLowerDrawings)
+    renderUtLevels(utUpperLevels, utLongevityUpperColorInput, utUpperDrawings)
+    renderUtLevels(utLowerLevels, utLongevityLowerColorInput, utLowerDrawings)
 else if barstate.islast
-    if array.size(utUpperDrawings) > 0
-        for i = 0 to array.size(utUpperDrawings) - 1
-            d = array.get(utUpperDrawings, i)
-            line.delete(d.top)
-            line.delete(d.bot)
-            if not na(d.fill)
-                linefill.delete(d.fill)
-            label.delete(d.lbl)
-        array.clear(utUpperDrawings)
-    if array.size(utLowerDrawings) > 0
-        for i = 0 to array.size(utLowerDrawings) - 1
-            d = array.get(utLowerDrawings, i)
-            line.delete(d.top)
-            line.delete(d.bot)
-            if not na(d.fill)
-                linefill.delete(d.fill)
-            label.delete(d.lbl)
-        array.clear(utLowerDrawings)
+    clearUtDrawings(utUpperDrawings)
+    clearUtDrawings(utLowerDrawings)
 
 float utH1000 = ta.highest(high, 1000)
 float utH750 = ta.highest(high, 750)
@@ -343,6 +317,53 @@ updateRangeFillBox(box existing, bool visible, int left, int right, float top, f
             box.delete(result)
         result := na
     result
+
+drawSessionBase(
+    bool visible,
+    int fromDate,
+    int toDate,
+    float lowPrice,
+    float highPrice,
+    float midPrice,
+    color borderColor,
+    color midColor,
+    line_style borderStyle,
+    line_style midStyle,
+    int borderWidth,
+    int midWidth
+) =>
+    if visible
+        line lowerLine = line.new(fromDate, lowPrice, toDate, lowPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
+        line.delete(lowerLine[1])
+        line upperLine = line.new(fromDate, highPrice, toDate, highPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
+        line.delete(upperLine[1])
+        line midLine = line.new(fromDate, midPrice, toDate, midPrice, xloc=xloc.bar_time, color=midColor, style=midStyle, width=midWidth)
+        line.delete(midLine[1])
+        line startBox = line.new(fromDate, highPrice, fromDate, lowPrice, extend=extend.none, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
+        line.delete(startBox[1])
+        line endBox = line.new(toDate, highPrice, toDate, lowPrice, extend=extend.none, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=borderWidth)
+        line.delete(endBox[1])
+
+drawSessionExtensions(
+    bool visible,
+    int fromDate,
+    int toDate,
+    float lowPrice,
+    float highPrice,
+    float midPrice,
+    color borderColor,
+    color midColor,
+    line_style borderStyle,
+    line_style midStyle,
+    int lineWidth
+) =>
+    if visible
+        line lowerExt = line.new(fromDate, lowPrice, toDate, lowPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=lineWidth)
+        line.delete(lowerExt[1])
+        line upperExt = line.new(fromDate, highPrice, toDate, highPrice, xloc=xloc.bar_time, color=borderColor, style=borderStyle, width=lineWidth)
+        line.delete(upperExt[1])
+        line midExt = line.new(fromDate, midPrice, toDate, midPrice, xloc=xloc.bar_time, color=midColor, style=midStyle, width=lineWidth)
+        line.delete(midExt[1])
 
 var box asianRangeFillBox = na
 var box londonRangeFillBox = na
@@ -754,31 +775,8 @@ float sessionRange = na
 var label sessionRangeLabel = na
 bool showAsianRange = show_asian_session and isBelowHourValidResolution()
 
-if showAsianRange
-    trl = line.new(FromDate, rth_low, ToDate, rth_low, xloc=xloc.bar_time, color=line_border_color, style=box_line_style, width = boxLineWidth)
-    line.delete(trl[1])
-
-    trh = line.new(FromDate, rth_high, ToDate, rth_high, xloc=xloc.bar_time, color=line_border_color, style=box_line_style, width = boxLineWidth)
-    line.delete(trh[1])
-
-    trm = line.new(FromDate, rth_mid, ToDate, rth_mid, xloc=xloc.bar_time, color=midline_border_color, style=middle_line_style, width = sessionLineWidth)
-    line.delete(trm[1])
-
-    startBox = line.new(FromDate, rth_high, FromDate, rth_low, extend=extend.none, xloc=xloc.bar_time, color=line_border_color, style=box_line_style, width=boxLineWidth)
-    line.delete(startBox[1])
-
-    endBox = line.new(ToDate, rth_high, ToDate, rth_low, extend=extend.none, xloc=xloc.bar_time, color=line_border_color, style=box_line_style, width=boxLineWidth)
-    line.delete(endBox[1])
-
-
-    tl = line.new(LineFromDate, rth_low, LineToDate, rth_low, xloc=xloc.bar_time, color=line_border_color, style=upperlower_line_style, width = sessionLineWidth)
-    line.delete(tl[1])
-
-    th = line.new(LineFromDate, rth_high, LineToDate, rth_high, xloc=xloc.bar_time, color=line_border_color, style=upperlower_line_style, width = sessionLineWidth)
-    line.delete(th[1])
-
-    tm = line.new(LineFromDate, rth_mid, LineToDate, rth_mid, xloc=xloc.bar_time, color=midline_border_color, style=middle_line_style, width = sessionLineWidth)
-    line.delete(tm[1])
+drawSessionBase(showAsianRange, FromDate, ToDate, rth_low, rth_high, rth_mid, line_border_color, midline_border_color, box_line_style, middle_line_style, boxLineWidth, sessionLineWidth)
+drawSessionExtensions(showAsianRange, LineFromDate, LineToDate, rth_low, rth_high, rth_mid, line_border_color, midline_border_color, upperlower_line_style, middle_line_style, sessionLineWidth)
 
 
 highRes = rth_high
@@ -835,22 +833,7 @@ london_rth_high = float(na)
 london_rth_high := london_rth_is_open ? london_rth_open_bar ? high : math.max(london_rth_high[1], high) : london_rth_high[1]
 london_rth_mid = (london_rth_low + london_rth_high) / 2
 
-if (show_london_session and isValidResolution())
-
-    ltrl = line.new(LondonFromDate, london_rth_low, LondonToDate, london_rth_low, xloc=xloc.bar_time, color=lline_border_color, style=lbox_line_style, width = lboxLineWidth)
-    line.delete(ltrl[1])
-
-    ltrh = line.new(LondonFromDate, london_rth_high, LondonToDate, london_rth_high, xloc=xloc.bar_time, color=lline_border_color, style=lbox_line_style, width = lboxLineWidth)
-    line.delete(ltrh[1])
-
-    ltrm = line.new(LondonFromDate, london_rth_mid, LondonToDate, london_rth_mid, xloc=xloc.bar_time, color=lmidline_border_color, style=lmiddle_line_style, width = lsessionLineWidth)
-    line.delete(ltrm[1])
-
-    londonStartBox = line.new(LondonFromDate, london_rth_high, LondonFromDate, london_rth_low, extend=extend.none, xloc=xloc.bar_time, color=lline_border_color, style=lbox_line_style, width=lboxLineWidth)
-    line.delete(londonStartBox[1])
-
-    londonEndBox = line.new(LondonToDate, london_rth_high, LondonToDate, london_rth_low, extend=extend.none, xloc=xloc.bar_time, color=lline_border_color, style=lbox_line_style, width=lboxLineWidth)
-    line.delete(londonEndBox[1])
+drawSessionBase(show_london_session and isValidResolution(), LondonFromDate, LondonToDate, london_rth_low, london_rth_high, london_rth_mid, lline_border_color, lmidline_border_color, lbox_line_style, lmiddle_line_style, lboxLineWidth, lsessionLineWidth)
 
 
 
@@ -907,22 +890,7 @@ ny_rth_high = float(na)
 ny_rth_high := ny_rth_is_open ? ny_rth_open_bar ? high : math.max(ny_rth_high[1], high) : ny_rth_high[1]
 ny_rth_mid = (ny_rth_low + ny_rth_high) / 2
 
-if (show_ny_session and isValidResolution())
-
-    ntrl = line.new(NyFromDate, ny_rth_low, NyToDate, ny_rth_low, xloc=xloc.bar_time, color=nline_border_color, style=nbox_line_style, width = nboxLineWidth)
-    line.delete(ntrl[1])
-
-    ntrh = line.new(NyFromDate, ny_rth_high, NyToDate, ny_rth_high, xloc=xloc.bar_time, color=nline_border_color, style=nbox_line_style, width = nboxLineWidth)
-    line.delete(ntrh[1])
-
-    ntrm = line.new(NyFromDate, ny_rth_mid, NyToDate, ny_rth_mid, xloc=xloc.bar_time, color=nmidline_border_color, style=nmiddle_line_style, width = nsessionLineWidth)
-    line.delete(ntrm[1])
-
-    nyStartBox = line.new(NyFromDate, ny_rth_high, NyFromDate, ny_rth_low, extend=extend.none, xloc=xloc.bar_time, color=nline_border_color, style=nbox_line_style, width=nboxLineWidth)
-    line.delete(nyStartBox[1])
-
-    nyEndBox = line.new(NyToDate, ny_rth_high, NyToDate, ny_rth_low, extend=extend.none, xloc=xloc.bar_time, color=nline_border_color, style=nbox_line_style, width=nboxLineWidth)
-    line.delete(nyEndBox[1])
+drawSessionBase(show_ny_session and isValidResolution(), NyFromDate, NyToDate, ny_rth_low, ny_rth_high, ny_rth_mid, nline_border_color, nmidline_border_color, nbox_line_style, nmiddle_line_style, nboxLineWidth, nsessionLineWidth)
 
 
 
@@ -1815,6 +1783,137 @@ if sVimbl
         pop.l2.delete()
         pop.lb.delete()
 
+fvgColor(bool isBull) => isBull ? cFVGbl : cFVGbr
+
+fvgBreakColor(bool isBull) => isBull ? cFVGblBR : cFVGbrBR
+
+handleFvgCreation(
+    bool condition,
+    bool prevCondition,
+    float prevTopValue,
+    float prevBottomValue,
+    float boxTopValue,
+    float boxBottomValue,
+    FVG[] storage,
+    color baseColor
+) =>
+    if condition and per and shwFVG
+        if prevCondition
+            storage.get(0).box.set_lefttop    (n -2, prevTopValue)
+            storage.get(0).box.set_rightbottom(n +8, prevBottomValue)
+        else
+            storage.unshift(FVG.new(
+             box.new(
+               n -2
+             , boxTopValue
+             , n
+             , boxBottomValue
+             , bgcolor      = i_BPR ? na : color.new(baseColor, 90)
+             , border_color = i_BPR ? na : color.new(baseColor, 65)
+             , text_color   = i_BPR ? na : color.new(baseColor, 65)
+             , text_size    = size.small
+             , text         = i_FVG
+             )
+             , true)
+             )
+            storage.pop().box.delete()
+
+handleBprCreation(
+    bool condition,
+    FVG[] storage,
+    float left,
+    float top,
+    float right,
+    float bottom,
+    color baseColor,
+    int position
+) =>
+    if condition
+        if left == storage.get(0).box.get_left()
+            if storage.get(0).active
+                storage.get(0).box.set_right(right)
+        else
+            storage.unshift(FVG.new(
+             box.new(
+               left
+             , top
+             , right
+             , bottom
+             , bgcolor      = color.new(baseColor, 90)
+             , border_color = color.new(baseColor, 65)
+             , text_color   = color.new(baseColor, 65)
+             , text_size    = size.small
+             , text         = 'BPR'
+             )
+             , true
+             , position
+             ))
+            storage.pop().box.delete()
+
+updateFvgArray(FVG[] storage, bool isBull) =>
+    for i = 0 to math.min(bxBack, storage.size() -1)
+        item = storage.get(i)
+        if item.active
+            item.box.set_right(bar_index +8)
+            float top = item.box.get_top()
+            float bottom = item.box.get_bottom()
+            bool touchPrimary = isBull ? low  < top    : high > bottom
+            bool touchBreak   = isBull ? low  < bottom : high > top
+            if touchPrimary and not i_BPR
+                item.box.set_border_style(line.style_dashed)
+            if touchBreak
+                if not i_BPR
+                    item.box.set_bgcolor(color.new(fvgBreakColor(isBull), 95))
+                    item.box.set_border_style(line.style_dotted)
+                item.box.set_right(bar_index)
+                item.active := false
+
+updateBprArray(FVG[] storage, color breakColor) =>
+    for i = 0 to math.min(bxBack, storage.size() -1)
+        item = storage.get(i)
+        if item.active
+            item.box.set_right(bar_index +8)
+            switch item.pos
+                -1 =>
+                    if high > item.box.get_bottom()
+                        item.box.set_border_style(line.style_dashed)
+                    if high > item.box.get_top   ()
+                        item.box.set_bgcolor(color.new(breakColor, 95))
+                        item.box.set_border_style(line.style_dotted)
+                        item.box.set_right(bar_index)
+                        item.active := false
+                1 =>
+                    if low  < item.box.get_top   ()
+                        item.box.set_border_style(line.style_dashed)
+                    if low  < item.box.get_bottom()
+                        item.box.set_bgcolor(color.new(breakColor, 95))
+                        item.box.set_border_style(line.style_dotted)
+                        item.box.set_right(bar_index)
+                        item.active := false
+
+updateLiquidity(liq[] storage, bool isBuy, color fillColor) =>
+    for i = 0 to storage.size() -1
+        liqItem = storage.get(i)
+        if not liqItem.broken
+            liqItem.bx.set_right(n +3)
+            liqItem.ln.set_x2  (n +3)
+            float top = liqItem.bx.get_top()
+            float bottom = liqItem.bx.get_bottom()
+            bool brokeTop = isBuy ? close > top : close < top
+            bool brokeBottom = isBuy ? close > bottom : close < bottom
+            if not liqItem.brokenTop and brokeTop
+                liqItem.brokenTop := true
+            if not liqItem.brokenBtm and brokeBottom
+                liqItem.brokenBtm := true
+            bool highlight = isBuy ? liqItem.brokenBtm : liqItem.brokenTop
+            if highlight
+                liqItem.bx.set_bgcolor(color.new(fillColor, 90))
+                liqItem.ln.delete()
+                bool fullyBroken = isBuy ? liqItem.brokenTop : liqItem.brokenBtm
+                if fullyBroken
+                    liqItem.broken := true
+                    liqItem.bx.set_right(n)
+
 if barstate.isfirst
     for i = 0 to visBxs -1
         bFVG_UP.unshift(FVG.new(na, false))
@@ -1823,45 +1922,13 @@ if barstate.isfirst
             bBPR_UP.unshift(FVG.new(na, false))
             bBPR_DN.unshift(FVG.new(na, false))
 
-if imbalanceUP and per and shwFVG
-    if imbalanceUP[1]
-        bFVG_UP.get(0).box.set_lefttop    (n -2, low    )
-        bFVG_UP.get(0).box.set_rightbottom(n +8, high[2])
-    else
-        bFVG_UP.unshift(FVG.new(
-          box.new(
-           n -2
-         ,    i_FVG == 'FVG' ? low : high[2]
-         , n, i_FVG == 'FVG' ? high[2] : low
-         , bgcolor     = i_BPR ? na : color.new(cFVGbl, 90)
-         , border_color= i_BPR ? na : color.new(cFVGbl, 65)
-         , text_color  = i_BPR ? na : color.new(cFVGbl, 65)
-         , text_size=size.small
-         , text=i_FVG
-         )
-         , true)
-         )
-        bFVG_UP.pop().box.delete()
+float bullFvgTop = i_FVG == 'FVG' ? low : high[2]
+float bullFvgBottom = i_FVG == 'FVG' ? high[2] : low
+handleFvgCreation(imbalanceUP, imbalanceUP[1], low, high[2], bullFvgTop, bullFvgBottom, bFVG_UP, fvgColor(true))
 
-if imbalanceDN and per and shwFVG
-    if imbalanceDN[1]
-        bFVG_DN.get(0).box.set_lefttop    (n -2, low[2])
-        bFVG_DN.get(0).box.set_rightbottom(n +8, high  )
-    else
-        bFVG_DN.unshift(FVG.new(
-         box.new(
-           n -2
-         ,    i_FVG == 'FVG' ? low[2] : high
-         , n, i_FVG == 'FVG' ? high   : low[2]
-         , bgcolor     = i_BPR ? na : color.new(cFVGbr, 90)
-         , border_color= i_BPR ? na : color.new(cFVGbr, 65)
-         , text_color  = i_BPR ? na : color.new(cFVGbr, 65)
-         , text_size=size.small
-         , text=i_FVG
-         )
-         , true)
-         )
-        bFVG_DN.pop().box.delete()
+float bearFvgTop = i_FVG == 'FVG' ? low[2] : high
+float bearFvgBottom = i_FVG == 'FVG' ? high : low[2]
+handleFvgCreation(imbalanceDN, imbalanceDN[1], low[2], high, bearFvgTop, bearFvgBottom, bFVG_DN, fvgColor(false))
 
 if i_BPR and bFVG_UP.size() > 0 and bFVG_DN.size() > 0
     bxUP    = bFVG_UP.get(0)
@@ -1872,115 +1939,33 @@ if i_BPR and bFVG_UP.size() > 0 and bFVG_DN.size() > 0
     bxDNtop = bxDN.box.get_top()
     left    = math.min(bxUP.box.get_left (), bxDN.box.get_left ())
     right   = math.max(bxUP.box.get_right(), bxDN.box.get_right())
-    if bxUPbtm < bxDNtop and
-       bxDNbtm < bxUPbtm
-        if left == bBPR_UP.get(0).box.get_left()
-            if  bBPR_UP.get(0).active
-                bBPR_UP.get(0).box.set_right(right)
-        else
-            bBPR_UP.unshift(FVG.new(
-             box.new(
-              left, bxDNtop, right, bxUPbtm
-             , bgcolor     = i_BPR ? color.new(cFVGbl, 90) : na
-             , border_color= i_BPR ? color.new(cFVGbl, 65) : na
-             , text_color  = i_BPR ? color.new(cFVGbl, 65) : na
-              , text_size=size.small
-              , text= 'BPR'                 )
-              , true
-              , close > bxUPbtm ? 1 : close < bxDNtop ? -1 : 0
-              )
-             )
-            bBPR_UP.pop().box.delete()
-    if bxDNbtm < bxUPtop and
-       bxUPbtm < bxDNbtm
-        if left == bBPR_DN.get(0).box.get_left()
-            if  bBPR_DN.get(0).active
-                bBPR_DN.get(0).box.set_right(right)
-        else
-            bBPR_DN.unshift(FVG.new(
-             box.new(
-              left, bxUPtop, right, bxDNbtm
-             , bgcolor     = i_BPR ? color.new(cFVGbr, 90) : na
-             , border_color= i_BPR ? color.new(cFVGbr, 65) : na
-             , text_color  = i_BPR ? color.new(cFVGbr, 65) : na
-              , text_size=size.small
-              , text= 'BPR'                 )
-              , true
-              , close > bxDNbtm ? 1 : close < bxUPtop ? -1 : 0
-              )
-             )
-            bBPR_DN.pop().box.delete()
+    handleBprCreation(
+      bxUPbtm < bxDNtop and bxDNbtm < bxUPbtm,
+      bBPR_UP,
+      left,
+      bxDNtop,
+      right,
+      bxUPbtm,
+      cFVGbl,
+      close > bxUPbtm ? 1 : close < bxDNtop ? -1 : 0
+    )
+    handleBprCreation(
+      bxDNbtm < bxUPtop and bxUPbtm < bxDNbtm,
+      bBPR_DN,
+      left,
+      bxUPtop,
+      right,
+      bxDNbtm,
+      cFVGbr,
+      close > bxDNbtm ? 1 : close < bxUPtop ? -1 : 0
+    )
 
-for i = 0 to math.min(bxBack, bFVG_UP.size() -1)
-    getUPi = bFVG_UP.get(i)
-    if getUPi.active
-        getUPi.box.set_right(bar_index +8)
-        if low  < getUPi.box.get_top() and not i_BPR
-            getUPi.box.set_border_style(line.style_dashed)
-        if low  < getUPi.box.get_bottom()
-            if not i_BPR
-                getUPi.box.set_bgcolor(color.new(cFVGblBR, 95))
-                getUPi.box.set_border_style(line.style_dotted)
-            getUPi.box.set_right(bar_index)
-            getUPi.active := false
-
-for i = 0 to math.min(bxBack, bFVG_DN.size() -1)
-    getDNi = bFVG_DN.get(i)
-    if getDNi.active
-        getDNi.box.set_right(bar_index +8)
-        if high > getDNi.box.get_bottom() and not i_BPR
-            getDNi.box.set_border_style(line.style_dashed)
-        if high > getDNi.box.get_top()
-            if not i_BPR
-                getDNi.box.set_bgcolor(color.new(cFVGbrBR, 95))
-                getDNi.box.set_border_style(line.style_dotted)
-            getDNi.box.set_right(bar_index)
-            getDNi.active := false
+updateFvgArray(bFVG_UP, true)
+updateFvgArray(bFVG_DN, false)
 
 if i_BPR
-    for i = 0 to math.min(bxBack, bBPR_UP.size() -1)
-        getUPi = bBPR_UP.get(i)
-        if getUPi.active
-            getUPi.box.set_right(bar_index +8)
-            switch getUPi.pos
-                -1 =>
-                    if high > getUPi.box.get_bottom()
-                        getUPi.box.set_border_style(line.style_dashed)
-                    if high > getUPi.box.get_top   ()
-                        getUPi.box.set_bgcolor(color.new(cFVGblBR, 95))
-                        getUPi.box.set_border_style(line.style_dotted)
-                        getUPi.box.set_right(bar_index)
-                        getUPi.active := false
-                1 =>
-                    if low  < getUPi.box.get_top   ()
-                        getUPi.box.set_border_style(line.style_dashed)
-                    if low  < getUPi.box.get_bottom()
-                        getUPi.box.set_bgcolor(color.new(cFVGblBR, 95))
-                        getUPi.box.set_border_style(line.style_dotted)
-                        getUPi.box.set_right(bar_index)
-                        getUPi.active := false
-
-    for i = 0 to math.min(bxBack, bBPR_DN.size() -1)
-        getDNi = bBPR_DN.get(i)
-        if getDNi.active
-            getDNi.box.set_right(bar_index +8)
-            switch getDNi.pos
-                -1 =>
-                    if high > getDNi.box.get_bottom()
-                        getDNi.box.set_border_style(line.style_dashed)
-                    if high > getDNi.box.get_top   ()
-                        getDNi.box.set_bgcolor(color.new(cFVGbrBR, 95))
-                        getDNi.box.set_border_style(line.style_dotted)
-                        getDNi.box.set_right(bar_index)
-                        getDNi.active := false
-                1 =>
-                    if low  < getDNi.box.get_top   ()
-                        getDNi.box.set_border_style(line.style_dashed)
-                    if low  < getDNi.box.get_bottom()
-                        getDNi.box.set_bgcolor(color.new(cFVGbrBR, 95))
-                        getDNi.box.set_border_style(line.style_dotted)
-                        getDNi.box.set_right(bar_index)
-                        getDNi.active := false
+    updateBprArray(bBPR_UP, cFVGblBR)
+    updateBprArray(bBPR_DN, cFVGbrBR)
 
 if barstate.isfirst
     for i = 0 to maxNWOG -1
@@ -2030,41 +2015,8 @@ if ta.change(dayofweek) != 0
          ))
         bl = bl_NDOG.pop(), bl.b.delete(), bl.l.delete()
 
-for i = 0 to b_liq_B.size() -1
-    x = b_liq_B.get(i)
-    if not x.broken
-        x.bx.set_right(n +3)
-        x.ln.set_x2   (n +3)
-        if not x.brokenTop
-            if close > x.bx.get_top   ()
-                x.brokenTop := true
-        if not x.brokenBtm
-            if close > x.bx.get_bottom()
-                x.brokenBtm := true
-        if x.brokenBtm
-            x.bx.set_bgcolor(color.new(cLIQ_B, 90))
-            x.ln.delete()
-            if x.brokenTop
-                x.broken := true
-                x.bx.set_right(n)
-
-for i = 0 to b_liq_S.size() -1
-    x = b_liq_S.get(i)
-    if not x.broken
-        x.bx.set_right(n +3)
-        x.ln.set_x2   (n +3)
-        if not x.brokenTop
-            if close < x.bx.get_top   ()
-                x.brokenTop := true
-        if not x.brokenBtm
-            if close < x.bx.get_bottom()
-                x.brokenBtm := true
-        if x.brokenTop
-            x.bx.set_bgcolor(color.new(cLIQ_S, 90))
-            x.ln.delete()
-            if x.brokenBtm
-                x.broken := true
-                x.bx.set_right(n)
+updateLiquidity(b_liq_B, true, cLIQ_B)
+updateLiquidity(b_liq_S, false, cLIQ_S)
 
 [top, btm] = swings(length)
 
