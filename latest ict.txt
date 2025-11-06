@@ -1120,6 +1120,13 @@ utSrLineL100 := updateUtSrLine(utSrLineL100, utSrVisible and not utSrConflicts(u
 utSrLineL50 := updateUtSrLine(utSrLineL50, utSrVisible and not utSrConflicts(utL50), utL50, close > utL50 ? color.green : color.red)
 utSrLineL10 := updateUtSrLine(utSrLineL10, utSrVisible and not utSrConflicts(utL10), utL10, close > utL10 ? color.green : color.red)
 
+float utDashMacdLine = na
+float utDashMacdSignal = na
+float utDashMacdHist = na
+[utDashMacdLine, utDashMacdSignal, utDashMacdHist] = ta.macd(close, utMacdFastLengthInput, utMacdSlowLengthInput, utMacdSignalLengthInput)
+
+float utAtrNow = ta.atr(14)
+
 bool utDashboardVisible = utModuleActive and utDashboardPanelInput
 if utDashboardVisible
     if na(utDashTable) or utPanelPlacementInput != utDashPrevPlacement
@@ -1139,16 +1146,11 @@ if utDashboardVisible
     string utVolBias = not na(utVolMa) ? (utVolNow > utVolMa ? '🟢 Above Avg' : utVolNow < utVolMa ? '🔴 Below Avg' : '— Avg') : '— Avg'
     float utVwapVal = ta.vwap(close)
     string utVwapPos = not na(utVwapVal) ? (close > utVwapVal ? '🟢 Price Above' : close < utVwapVal ? '🔴 Price Below' : '— Price @') : '— Price n/a'
-    float utDashMacdLine = na
-    float utDashMacdSignal = na
-    float utDashMacdHist = na
-    [utDashMacdLine, utDashMacdSignal, utDashMacdHist] := ta.macd(close, utMacdFastLengthInput, utMacdSlowLengthInput, utMacdSignalLengthInput)
     string utMacdBias = not na(utDashMacdLine) and not na(utDashMacdSignal) ? (utDashMacdLine > utDashMacdSignal ? '🟢 Bullish' : utDashMacdLine < utDashMacdSignal ? '🔴 Bearish' : '— Neutral') : '— Neutral'
     float utK = ta.sma(ta.stoch(close, high, low, utStochLengthInput), utStochKInput)
     float utD = ta.sma(utK, utStochDInput)
     string utStochPos = not na(utK) and not na(utD) ? (utK > utD ? '🟢 Up' : utK < utD ? '🔴 Down' : '— Flat') : '— Flat'
     string utStochState = (not na(utK) ? utStochPos + ' but ' + (utK > 80 ? 'Overbought' : utK < 20 ? 'Oversold' : 'Neutral') : '— Flat')
-    float utAtrNow = ta.atr(14)
     float utAtrSma20 = ta.sma(utAtrNow, 20)
     string utAtrHiLo = not na(utAtrNow) and not na(utAtrSma20) ? (utAtrNow > utAtrSma20 * 1.20 ? '🟢 High' : utAtrNow < utAtrSma20 * 0.80 ? '🔴 Low' : '— Mid') : '— Mid'
     float utRsi = ta.rsi(close, 14)
@@ -3992,10 +3994,8 @@ int offset = settings.offset
 var CandleSet[] htfSets = array.from(htf1, htf2, htf3, htf4, htf5, htf6)
 
 for i = 0 to array.size(htfSets) - 1 by 1
-    array.get(htfSets, i).Monitor()
-
-for i = 0 to array.size(htfSets) - 1 by 1
     CandleSet htf = array.get(htfSets, i)
+    htf.Monitor()
     bool canProcess = htf.settings.show and helper.ValidTimeframe(htf.settings.htf) and cnt < last
     if canProcess
         bool showTrace = shouldShowTrace(cnt, last)
