@@ -320,7 +320,7 @@ updateRangeFillBox(box existing, bool visible, int left, int right, float top, f
         result := na
     result
 
-drawSessionBase(bool visible, int fromDate, int toDate, float lowPrice, float highPrice, float midPrice, color borderColor, color midColor, line_style borderStyle, line_style midStyle, int borderWidth, int midWidth, line lowerLine, line upperLine, line midLine, line startBox, line endBox) =>
+drawSessionBase(bool visible, int fromDate, int toDate, float lowPrice, float highPrice, float midPrice, color borderColor, color midColor, string borderStyle, string midStyle, int borderWidth, int midWidth, line lowerLine, line upperLine, line midLine, line startBox, line endBox) =>
     line _lowerLine = lowerLine
     line _upperLine = upperLine
     line _midLine = midLine
@@ -397,7 +397,7 @@ drawSessionBase(bool visible, int fromDate, int toDate, float lowPrice, float hi
 
     [_lowerLine, _upperLine, _midLine, _startBox, _endBox]
 
-drawSessionExtensions(bool visible, int fromDate, int toDate, float lowPrice, float highPrice, float midPrice, color borderColor, color midColor, line_style borderStyle, line_style midStyle, int lineWidth, line lowerExt, line upperExt, line midExt) =>
+drawSessionExtensions(bool visible, int fromDate, int toDate, float lowPrice, float highPrice, float midPrice, color borderColor, color midColor, string borderStyle, string midStyle, int lineWidth, line lowerExt, line upperExt, line midExt) =>
     line _lowerExt = lowerExt
     line _upperExt = upperExt
     line _midExt = midExt
