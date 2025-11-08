@@ -446,31 +446,31 @@ drawSessionExtensions(bool visible, int fromDate, int toDate, float lowPrice, fl
 
     [_lowerExt, _upperExt, _midExt]
 
-var line asianLowerLine = na
-var line asianUpperLine = na
-var line asianMidLine = na
-var line asianStartBox = na
-var line asianEndBox = na
+var line sessionAsianLowerLine = na
+var line sessionAsianUpperLine = na
+var line sessionAsianMidLine = na
+var line sessionAsianStartBox = na
+var line sessionAsianEndBox = na
 
-var line londonLowerLine = na
-var line londonUpperLine = na
-var line londonMidLine = na
-var line londonStartBox = na
-var line londonEndBox = na
+var line sessionLondonLowerLine = na
+var line sessionLondonUpperLine = na
+var line sessionLondonMidLine = na
+var line sessionLondonStartBox = na
+var line sessionLondonEndBox = na
 
-var line nyLowerLine = na
-var line nyUpperLine = na
-var line nyMidLine = na
-var line nyStartBox = na
-var line nyEndBox = na
+var line sessionNyLowerLine = na
+var line sessionNyUpperLine = na
+var line sessionNyMidLine = na
+var line sessionNyStartBox = na
+var line sessionNyEndBox = na
 
-var line asianLowerExtLine = na
-var line asianUpperExtLine = na
-var line asianMidExtLine = na
+var line sessionAsianLowerExtLine = na
+var line sessionAsianUpperExtLine = na
+var line sessionAsianMidExtLine = na
 
-var box asianRangeFillBox = na
-var box londonRangeFillBox = na
-var box nyRangeFillBox = na
+var box sessionAsianRangeFillBox = na
+var box sessionLondonRangeFillBox = na
+var box sessionNyRangeFillBox = na
 
 
 show_london_session = input.bool(defval=true, title="Show London Session Box")
@@ -878,14 +878,14 @@ float sessionRange = na
 var label sessionRangeLabel = na
 bool showAsianRange = show_asian_session and isBelowHourValidResolution()
 
-[asianLowerLine, asianUpperLine, asianMidLine, asianStartBox, asianEndBox] = drawSessionBase(showAsianRange, FromDate, ToDate, rth_low, rth_high, rth_mid, line_border_color, midline_border_color, box_line_style, middle_line_style, boxLineWidth, sessionLineWidth, asianLowerLine, asianUpperLine, asianMidLine, asianStartBox, asianEndBox)
-[asianLowerExtLine, asianUpperExtLine, asianMidExtLine] = drawSessionExtensions(showAsianRange, LineFromDate, LineToDate, rth_low, rth_high, rth_mid, line_border_color, midline_border_color, upperlower_line_style, middle_line_style, sessionLineWidth, asianLowerExtLine, asianUpperExtLine, asianMidExtLine)
+[sessionAsianLowerLine, sessionAsianUpperLine, sessionAsianMidLine, sessionAsianStartBox, sessionAsianEndBox] = drawSessionBase(showAsianRange, FromDate, ToDate, rth_low, rth_high, rth_mid, line_border_color, midline_border_color, box_line_style, middle_line_style, boxLineWidth, sessionLineWidth, sessionAsianLowerLine, sessionAsianUpperLine, sessionAsianMidLine, sessionAsianStartBox, sessionAsianEndBox)
+[sessionAsianLowerExtLine, sessionAsianUpperExtLine, sessionAsianMidExtLine] = drawSessionExtensions(showAsianRange, LineFromDate, LineToDate, rth_low, rth_high, rth_mid, line_border_color, midline_border_color, upperlower_line_style, middle_line_style, sessionLineWidth, sessionAsianLowerExtLine, sessionAsianUpperExtLine, sessionAsianMidExtLine)
 
 
 highRes = rth_high
 lowRes = rth_low
 
-asianRangeFillBox := updateRangeFillBox(asianRangeFillBox, timerange(timeframe.period, rth_fill_ses) and showAsianRange, FromDate, ToDate, highRes, lowRes, color.new(color.blue, 90))
+sessionAsianRangeFillBox := updateRangeFillBox(sessionAsianRangeFillBox, timerange(timeframe.period, rth_fill_ses) and showAsianRange, FromDate, ToDate, highRes, lowRes, color.new(color.blue, 90))
 bgcolor(timerange(timeframe.period, rth_ses) and showAsianRange ? color.new(color.silver, 100) : na, title="Asian Session Background Color")
 
 if (not inSession and inSession[1] and showAsianRange)
@@ -936,7 +936,7 @@ london_rth_high = float(na)
 london_rth_high := london_rth_is_open ? london_rth_open_bar ? high : math.max(london_rth_high[1], high) : london_rth_high[1]
 london_rth_mid = (london_rth_low + london_rth_high) / 2
 
-[londonLowerLine, londonUpperLine, londonMidLine, londonStartBox, londonEndBox] = drawSessionBase(show_london_session and isValidResolution(), LondonFromDate, LondonToDate, london_rth_low, london_rth_high, london_rth_mid, lline_border_color, lmidline_border_color, lbox_line_style, lmiddle_line_style, lboxLineWidth, lsessionLineWidth, londonLowerLine, londonUpperLine, londonMidLine, londonStartBox, londonEndBox)
+[sessionLondonLowerLine, sessionLondonUpperLine, sessionLondonMidLine, sessionLondonStartBox, sessionLondonEndBox] = drawSessionBase(show_london_session and isValidResolution(), LondonFromDate, LondonToDate, london_rth_low, london_rth_high, london_rth_mid, lline_border_color, lmidline_border_color, lbox_line_style, lmiddle_line_style, lboxLineWidth, lsessionLineWidth, sessionLondonLowerLine, sessionLondonUpperLine, sessionLondonMidLine, sessionLondonStartBox, sessionLondonEndBox)
 
 
 
@@ -947,7 +947,7 @@ londonHighRes = london_rth_high
 londonLowRes = london_rth_low
 
 bool londonFillVisible = timerange(timeframe.period, london_rth_fill_ses) and show_london_session and isBelowHourValidResolution()
-londonRangeFillBox := updateRangeFillBox(londonRangeFillBox, londonFillVisible, LondonFromDate, LondonToDate, londonHighRes, londonLowRes, color.new(color.teal, 90))
+sessionLondonRangeFillBox := updateRangeFillBox(sessionLondonRangeFillBox, londonFillVisible, LondonFromDate, LondonToDate, londonHighRes, londonLowRes, color.new(color.teal, 90))
 bgcolor(timerange(timeframe.period, london_rth_fill_ses) and show_london_session and isBelowHourValidResolution() ? color.new(color.silver, 100) : na, title="London Session Background Color")
 
 if show_london_session_rng and not inLondonSession and inLondonSession[1] and isBelowHourValidResolution()
@@ -993,7 +993,7 @@ ny_rth_high = float(na)
 ny_rth_high := ny_rth_is_open ? ny_rth_open_bar ? high : math.max(ny_rth_high[1], high) : ny_rth_high[1]
 ny_rth_mid = (ny_rth_low + ny_rth_high) / 2
 
-[nyLowerLine, nyUpperLine, nyMidLine, nyStartBox, nyEndBox] = drawSessionBase(show_ny_session and isValidResolution(), NyFromDate, NyToDate, ny_rth_low, ny_rth_high, ny_rth_mid, nline_border_color, nmidline_border_color, nbox_line_style, nmiddle_line_style, nboxLineWidth, nsessionLineWidth, nyLowerLine, nyUpperLine, nyMidLine, nyStartBox, nyEndBox)
+[sessionNyLowerLine, sessionNyUpperLine, sessionNyMidLine, sessionNyStartBox, sessionNyEndBox] = drawSessionBase(show_ny_session and isValidResolution(), NyFromDate, NyToDate, ny_rth_low, ny_rth_high, ny_rth_mid, nline_border_color, nmidline_border_color, nbox_line_style, nmiddle_line_style, nboxLineWidth, nsessionLineWidth, sessionNyLowerLine, sessionNyUpperLine, sessionNyMidLine, sessionNyStartBox, sessionNyEndBox)
 
 
 
@@ -1004,7 +1004,7 @@ nyHighRes = ny_rth_high
 nyLowRes = ny_rth_low
 
 bool nyFillVisible = timerange(timeframe.period, ny_rth_fill_ses) and show_ny_session and isBelowHourValidResolution()
-nyRangeFillBox := updateRangeFillBox(nyRangeFillBox, nyFillVisible, NyFromDate, NyToDate, nyHighRes, nyLowRes, color.new(color.silver, 90))
+sessionNyRangeFillBox := updateRangeFillBox(sessionNyRangeFillBox, nyFillVisible, NyFromDate, NyToDate, nyHighRes, nyLowRes, color.new(color.silver, 90))
 bgcolor(timerange(timeframe.period, ny_rth_fill_ses) and show_ny_session and isBelowHourValidResolution() ? color.new(color.silver, 100) : na, title="New York Session Background Color")
 
 if show_ny_session_rng and not inNySession and inNySession[1] and isBelowHourValidResolution()
